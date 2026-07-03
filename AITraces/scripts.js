@@ -1,3 +1,32 @@
+// Состояние онлайн-режима (по умолчанию false)
+let isOnlineMode = localStorage.getItem('isOnlineMode_traces') === 'true';
+const n8nWebhookUrl = "https://vennerkurh.app.n8n.cloud/webhook/2d4f1b30-8ace-48db-bfe5-af0034d701ba";
+
+// Функции управления режимом
+function toggleMode() {
+    isOnlineMode = !isOnlineMode;
+    localStorage.setItem('isOnlineMode_traces', isOnlineMode);
+    updateModeButtonVisuals();
+}
+
+function updateModeButtonVisuals() {
+    const btn = document.getElementById('modeBtn');
+    if (!btn) return;
+    if (isOnlineMode) {
+        btn.innerText = "Режим: Онлайн";
+        btn.classList.add('online-active');
+    } else {
+        btn.innerText = "Режим: Офлайн";
+        btn.classList.remove('online-active');
+    }
+}
+
+// Запуск визуала при старте
+document.addEventListener("DOMContentLoaded", () => {
+    updateModeButtonVisuals();
+});
+
+
 const AI_MARKERS = [
     // Скрытые цифровые водяные знаки ИИ (Фиолетовый цвет подсветки)
     { regex: /[\u200B\u200C\u200D\uFEFF\u200E\u200F]/g, label: 'Скрытый водяной знак: Невидимые символы (Zero-Width Characters)', className: 'hl-watermark' },
@@ -131,16 +160,68 @@ if (analyzeBtn) {
     analyzeBtn.addEventListener('click', async () => {
         const text = textInput.value.trim();
         if (!text) {
-            alert("Пожалуйста, введите текст или перетащите .txt файл.");
+            alert("Пожалуйста, введите текст или перетащите файл.");
             return;
         }
 
-        // 1. Быстрый анализ текстовых маркеров штампов
+        // Скрываем прошлые результаты и заглушку, показываем спиннер
+        const placeholder = document.getElementById('resultsPlaceholder');
+        if (placeholder) placeholder.classList.add('hidden');
+        resultsDiv.classList.add('hidden');
+        
+        const spinner = document.getElementById('loadingSpinner');
+        if (spinner) spinner.classList.remove('hidden');
+
+        // --- ОНЛАЙН РЕЖИМ ЧЕРЕЗ АГЕНТА N8N ---
+        if (isOnlineMode) {
+            try {
+                const response = await fetch(n8nWebhookUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        action: "analyze_text_traces", // Наш Switch в n8n поймает этот экшен!
+                        text: text
+                    })
+                });
+
+                if (response.ok) {
+                    const rawData = await response.json();
+                    
+                    // Ожидаем от будущей ноды n8n объект с вердиктом и массивом подсветок
+                    // Структуру ответа n8n мы настроим на следующем шаге
+                    aiScoreSpan.textContent = rawData.verdict || "Сканирование завершено";
+                    markerCountSpan.textContent = rawData.markers_count || "0";
+                    if (rawData.verdict_color) aiScoreSpan.style.color = rawData.verdict_color;
+
+                    const highlightedTextDiv = document.getElementById('highlightedText');
+                    if (highlightedTextDiv) highlightedTextDiv.innerHTML = rawData.html || text;
+
+                    markerList.innerHTML = '';
+                    if (Array.isArray(rawData.markers)) {
+                        rawData.markers.forEach(m => {
+                            const li = document.createElement('li');
+                            li.className = m.className || 'hl-stamp';
+                            li.textContent = m.text;
+                            markerList.appendChild(li);
+                        });
+                    }
+                    
+                    resultsDiv.classList.remove('hidden');
+                } else {
+                    alert(`Ошибка сервера n8n: ${response.status}`);
+                }
+            } catch (e) {
+                console.error("Ошибка n8n анализа:", e);
+                alert("Ошибка связи с ИИ оркестратором");
+            } finally {
+                if (spinner) spinner.classList.add('hidden');
+            }
+            return; // Выходим, офлайн логику ниже выполнять не нужно
+        }
+
+        // --- ОФЛАЙН РЕЖИМ (Твой оригинальный код регулярных выражений) ---
         markerList.innerHTML = '';
         let foundMarkersCount = 0;
-        
-        // Переменная для генерации подсвеченного HTML
-                // Переменная для генерации подсвеченного HTML
         let htmlHighlighted = text;
         const highlightedTextDiv = document.getElementById('highlightedText');
 
@@ -148,41 +229,24 @@ if (analyzeBtn) {
             const matches = text.match(item.regex);
             if (matches) {
                 foundMarkersCount += matches.length;
-                
                 const currentClass = item.className || 'hl-stamp';
                 
-                // Создаем элемент списка и красим его в цвет категории
                 const li = document.createElement('li');
                 li.className = currentClass;
                 li.textContent = `⚠️ Найдено: ${item.label} — ${matches.length} раз(а)`;
                 markerList.appendChild(li);
 
-                // Привязываем класс категории к заменяемому тексту в окне просмотра
                 htmlHighlighted = htmlHighlighted.replace(item.regex, function(found) {
-                    // Если символ невидимый (длина строки или код спецсимвола), даем ему видимую метку [W]
                     let visibleText = found;
-                    if (currentClass === 'hl-watermark') {
-                        visibleText = '[W]';
-                    }
+                    if (currentClass === 'hl-watermark') visibleText = '[W]';
                     return '<span class="' + currentClass + '">' + visibleText + '</span>';
                 });
-
-
             }
         });
 
-
-
-        // Выводим текст с подсветкой на экран
-        if (highlightedTextDiv) {
-            highlightedTextDiv.innerHTML = htmlHighlighted;
-        }
-
-
+        if (highlightedTextDiv) highlightedTextDiv.innerHTML = htmlHighlighted;
         markerCountSpan.textContent = foundMarkersCount;
-        resultsDiv.classList.remove('hidden');
 
-        // Выставляем вердикт на основе количества найденных штампов
         if (foundMarkersCount === 0) {
             aiScoreSpan.textContent = "Чистый текст (0 ИИ-маркеров)";
             aiScoreSpan.style.color = "#2ecc71";
@@ -194,6 +258,8 @@ if (analyzeBtn) {
             aiScoreSpan.style.color = "#e74c3c";
         }
 
+        if (spinner) spinner.classList.add('hidden');
+        resultsDiv.classList.remove('hidden');
     });
 }
 

@@ -1,121 +1,218 @@
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f7f6;
-    color: #333;
-    padding: 20px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    background-color: #0b0c10;
+    color: #cbd5e1;
+    margin: 0;
+    padding: 25px;
+    font-size: 13px;
 }
 .container {
-    max-width: 800px;
+    max-width: 1200px;
     margin: 0 auto;
-    background: white;
-    padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
-h1, h2, h3 {
-    text-align: center;
-    color: #2c3e50;
+h1 {
+    color: #ffb700;
+    font-size: 18px;
+    margin: 0 0 10px 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
-.drop-zone {
-    border: 2px dashed #3498db;
-    padding: 30px;
-    text-align: center;
-    cursor: pointer;
-    background: #ecf0f1;
-    border-radius: 5px;
-    margin-bottom: 20px;
-    transition: background 0.3s;
+.system-tag {
+    color: #64748b;
+    font-size: 14px;
+    margin-right: 5px;
 }
-.drop-zone:hover {
-    background: #e2e7e9;
+.header-line {
+    width: 100%;
+    height: 1px;
+    background-color: #2e3846;
+    margin-bottom: 25px;
+}
+.main-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+}
+@media (max-width: 768px) {
+    .main-layout { grid-template-columns: 1fr; }
+}
+h2 {
+    color: #ffb700;
+    font-size: 13px;
+    text-transform: uppercase;
+    margin-top: 0;
+    margin-bottom: 15px;
+    letter-spacing: 1px;
+}
+
+/* Поля ввода в стиле инпутов htmlpdf */
+input, select, textarea {
+    width: 100%;
+    padding: 10px;
+    background-color: #0e1017;
+    border: 1px solid #1e293b;
+    border-radius: 0px;
+    color: #fff;
+    box-sizing: border-box;
+    margin-bottom: 12px;
+    font-size: 13px;
+    font-family: inherit;
+}
+input::placeholder, textarea::placeholder {
+    color: #475569;
 }
 textarea {
-    width: 100%;
-    height: 200px;
-    padding: 10px;
-    border: 1px solid #bdc3c7;
-    border-radius: 5px;
+    height: 250px;
     resize: vertical;
+}
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #ffb700;
+    background-color: #111420;
+}
+
+/* Драг-зона для файлов */
+.drop-zone {
+    border: 1px dashed #475569;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    background: #0e1017;
+    margin-bottom: 15px;
+    color: #475569;
+    transition: all 0.15s ease;
+}
+.drop-zone:hover {
+    background: rgba(255, 183, 0, 0.02);
+    border-color: #ffb700;
+    color: #cbd5e1;
+}
+
+/* Кнопки как в htmlpdf */
+.btn {
+    padding: 10px 15px;
+    border: 1px solid #ffb700;
+    border-radius: 0px;
+    background-color: transparent;
+    color: #ffb700;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: inherit;
+    transition: all 0.15s ease;
+    width: 100%;
+}
+.btn-success { 
+    border-color: #ffb700; 
+    color: #ffb700; 
+}
+.btn-success:hover { 
+    background-color: rgba(255, 183, 0, 0.08);
+}
+
+/* Панели терминала с тонкими мягкими рамками */
+.editor-panel, .library-panel {
+    border: 1px solid #1e293b;
+    padding: 20px;
+    background-color: #0b0c10;
     box-sizing: border-box;
 }
-.btn {
-    display: block;
-    width: 100%;
-    padding: 15px;
-    background: #2ecc71;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    font-size: 16px;
-    cursor: pointer;
-    margin-top: 15px;
-}
-.btn:hover {
-    background: #27ae60;
-}
+
 .hidden {
-    display: none;
+    display: none !important;
 }
+
+/* Карточка вердикта */
 .score-card {
-    background: #f8f9fa;
+    background: #0e1017;
     padding: 15px;
-    border-left: 5px solid #e74c3c;
+    border: 1px solid #1e293b;
+    border-left: 4px solid #ffb700;
     margin-bottom: 20px;
-    font-size: 18px;
+    font-size: 14px;
+    text-transform: uppercase;
 }
 .score-card span {
     font-weight: bold;
 }
 
-#markerList li {
-    margin-bottom: 8px;
-    padding: 10px 15px;
-    border-radius: 6px;
-    list-style-type: none;
-    font-size: 14px;
+/* Окно предпросмотра подсвеченного текста */
+.text-preview {
+    width: 100%;
+    min-height: 150px;
+    max-height: 250px;
+    overflow-y: auto;
+    padding: 15px;
+    background: #0e1017;
+    border: 1px solid #1e293b;
+    margin-bottom: 20px;
+    line-height: 1.6;
+    white-space: pre-wrap;
     box-sizing: border-box;
+    color: #cbd5e1;
 }
-/* Стили плашек результатов в зависимости от типа следа */
-#markerList li.hl-stamp { background: #fdf2f2; border-left: 4px solid #e74c3c; color: #b91c1c; }
-#markerList li.hl-gemini { background: #f0f9ff; border-left: 4px solid #0284c7; color: #0369a1; }
-#markerList li.hl-code { background: #f0fdf4; border-left: 4px solid #22c55e; color: #15803d; }
-#markerList li.hl-tz { background: #fefce8; border-left: 4px solid #eab308; color: #a16207; }
+.text-preview::-webkit-scrollbar, .prompts-list::-webkit-scrollbar { width: 3px; }
+.text-preview::-webkit-scrollbar-track, .prompts-list::-webkit-scrollbar-track { background: #0b0c10; }
+.text-preview::-webkit-scrollbar-thumb, .prompts-list::-webkit-scrollbar-thumb { background: #334155; }
 
+/* Список плашек найденных маркеров */
+.prompts-list {
+    max-height: 200px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0;
+    margin: 0;
+}
+.prompts-list li {
+    margin-bottom: 0px;
+    padding: 10px 15px;
+    list-style-type: none;
+    font-size: 12px;
+    box-sizing: border-box;
+    background-color: #0e1017;
+    border: 1px solid #1e293b;
+}
 
+/* Стили плашек результатов на темном фоне */
+#markerList li.hl-stamp { background: #1a0f10; border-left: 4px solid #ef4444; color: #f87171; }
+#markerList li.hl-gemini { background: #0c1524; border-left: 4px solid #0284c7; color: #38bdf8; }
+#markerList li.hl-code { background: #0f1c15; border-left: 4px solid #22c55e; color: #4ade80; }
+#markerList li.hl-tz { background: #1c1a10; border-left: 4px solid #eab308; color: #facc15; }
+#markerList li.hl-watermark { background: #171126; border-left: 4px solid #a855f7; color: #c084fc; }
+
+/* Стили самого подсвеченного текста внутри блока просмотра */
+.hl-stamp { background: rgba(239, 68, 68, 0.25) !important; color: #f87171 !important; font-weight: bold; padding: 1px 2px; }
+.hl-gemini { background: rgba(2, 132, 199, 0.25) !important; color: #38bdf8 !important; font-weight: bold; padding: 1px 2px; }
+.hl-code { background: rgba(34, 197, 94, 0.25) !important; color: #4ade80 !important; font-weight: bold; padding: 1px 2px; }
+.hl-tz { background: rgba(234, 179, 8, 0.25) !important; color: #facc15 !important; font-weight: bold; padding: 1px 2px; }
+.hl-watermark { background: rgba(168, 85, 247, 0.25) !important; color: #c084fc !important; font-weight: bold; padding: 1px 2px; }
+
+/* Терминальный спиннер загрузки */
 .spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #3498db;
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
+    border: 2px solid #1e293b;
+    border-top: 2px solid #ffb700;
+    border-radius: 0%;
+    width: 20px;
+    height: 20px;
     animation: spin 1s linear infinite;
-    margin: 10px auto;
+    margin: 15px auto;
 }
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
 
-.text-preview {
-    width: 100%;
-    min-height: 150px;
-    max-height: 300px;
-    overflow-y: auto;
-    padding: 15px;
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    margin-bottom: 20px;
-    line-height: 1.6;
-    white-space: pre-wrap;
-    box-sizing: border-box;
+/* Стили для переключателя режимов */
+.btn-mode {
+    border-color: #475569;
+    color: #64748b;
 }
-/* Новые контрастные цвета для разных типов ИИ-следов */
-.hl-stamp { background: #ffcccc !important; border: 1px solid #cc0000; color: #880000 !important; font-weight: bold; padding: 1px 4px; border-radius: 3px; }
-.hl-gemini { background: #cceeff !important; border: 1px solid #0066cc; color: #004499 !important; font-weight: bold; padding: 1px 4px; border-radius: 3px; }
-.hl-code { background: #ccffcc !important; border: 1px solid #009933; color: #006622 !important; font-weight: bold; padding: 1px 4px; border-radius: 3px; }
-.hl-tz { background: #ffffcc !important; border: 1px solid #ccaa00; color: #665500 !important; font-weight: bold; padding: 1px 4px; border-radius: 3px; }
-/* Фиолетовая подсветка для скрытых водяных знаков ИИ */
-.hl-watermark { background: #f3e8ff !important; border: 1px solid #a855f7; color: #6b21a8 !important; font-weight: bold; padding: 1px 4px; border-radius: 3px; }
-#markerList li.hl-watermark { background: #faf5ff; border-left: 4px solid #a855f7; color: #6b21a8; }
-
+.btn-mode.online-active {
+    border-color: #ffb700;
+    color: #ffb700;
+    background-color: rgba(255, 183, 0, 0.05);
+}
