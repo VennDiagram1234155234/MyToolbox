@@ -1,259 +1,304 @@
 /* ==========================================================================
-   1. DESIGN SYSTEM & CONFIGURATION
-   ========================================================================== */
+1. DESIGN SYSTEM & CONFIGURATION
+========================================================================== */
 
 :root {
-    --bg-color: #0d0f12;
-    --panel-bg: #14181f;
-    --accent-gold: #ffb000;
-    --accent-gold-dim: rgba(255, 176, 0, 0.1);
-    --text-main: #e2e8f0;
-    --text-muted: #8a99ad;
-    --border-color: #262f3d;
-    --neon-green: #00e676;
-    --neon-green-dim: rgba(0, 230, 118, 0.15);
+  --bg-color: #0d0f12;
+  --panel-bg: #14181f;
+  --accent-gold: #ffb000;
+  --accent-gold-dim: rgba(255, 176, 0, 0.1);
+  --text-main: #e2e8f0;
+  --text-muted: #8a99ad;
+  --border-color: #262f3d;
+  --neon-green: #00e676;
+  --neon-green-dim: rgba(0, 230, 118, 0.15);
 }
 
 /* ==========================================================================
-   2. GLOBAL STYLES & BASE LAYOUT
-   ========================================================================== */
+2. GLOBAL STYLES & BASE LAYOUT
+========================================================================== */
 
 body {
-    font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
-    max-width: 650px;
-    margin: 60px auto;
-    padding: 20px;
-    background-color: var(--bg-color);
-    color: var(--text-main);
-    -webkit-font-smoothing: antialiased;
+  font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+  max-width: 650px;
+  margin: 60px auto;
+  padding: 20px;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
 }
 
 .container {
-    background: transparent;
-    padding: 0;
+  background: transparent;
+  padding: 0;
 }
 
 /* ==========================================================================
-   3. TYPOGRAPHY & HEADERS
-   ========================================================================== */
+3. TYPOGRAPHY & HEADERS
+========================================================================== */
 
 h1 {
-    font-size: 24px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--accent-gold);
-    border-bottom: 2px solid var(--accent-gold);
-    padding-bottom: 15px;
-    margin-bottom: 25px;
-    text-align: left;
-    text-shadow: 0 0 10px rgba(255, 176, 0, 0.2);
+  font-size: 24px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent-gold);
+  border-bottom: 2px solid var(--accent-gold);
+  padding-bottom: 15px;
+  margin-bottom: 25px;
+  text-align: left;
+  text-shadow: 0 0 10px rgba(255, 176, 0, 0.2);
 }
 
-/* Technical system access prefix label */
 h1::before {
-    content: "[ // SYSTEM_ACCESS ] ";
-    font-size: 14px;
-    color: var(--text-muted);
-    font-weight: normal;
+  content: "[ // SYSTEM_ACCESS ] ";
+  font-size: 14px;
+  color: var(--text-muted);
+  font-weight: normal;
 }
 
 /* ==========================================================================
-   4. CRITERIA LIST & ITEMS (COMPONENTS)
-   ========================================================================== */
+4. CRITERIA LIST & ITEMS (COMPONENTS)
+========================================================================== */
 
 #criteria-list {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    margin-bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 30px;
 }
 
 .criterion-item {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    background: var(--panel-bg);
-    padding: 15px 20px;
-    border: 1px solid var(--border-color);
-    border-left: 3px solid var(--accent-gold);
-    position: relative;
-    cursor: pointer;
-    user-select: none;
-    transition: all 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: var(--panel-bg);
+  padding: 15px 20px;
+  border: 1px solid var(--border-color);
+  border-left: 3px solid var(--accent-gold);
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease-in-out;
 }
 
-/* Interactive hover state for items */
 .criterion-item:hover {
-    border-color: var(--accent-gold);
-    background: rgba(255, 176, 0, 0.02);
+  border-color: var(--accent-gold);
+  background: rgba(255, 176, 0, 0.02);
 }
 
-/* Decorative cyberpunk-styled corner notch */
 .criterion-item::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 0;
-    height: 0;
-    border-style: solid;
-    border-width: 0 0 8px 8px;
-    border-color: transparent transparent var(--bg-color) transparent;
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 0 8px 8px;
+  border-color: transparent transparent var(--bg-color) transparent;
 }
 
 .criterion-checkbox {
-    width: 18px;
-    height: 18px;
-    accent-color: var(--accent-gold);
-    cursor: pointer;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent-gold);
+  cursor: pointer;
 }
 
 .criterion-item label {
-    font-size: 13px;
-    letter-spacing: 0.5px;
-    color: var(--text-main);
-    cursor: pointer;
-    flex: 1;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  color: var(--text-main);
+  cursor: pointer;
+  flex: 1;
 }
 
 .category-title {
-    font-size: 12px;
-    font-weight: bold;
-    color: var(--accent-gold);
-    margin-top: 15px;
-    margin-bottom: 5px;
-    letter-spacing: 1px;
-    opacity: 0.8;
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--accent-gold);
+  margin-top: 15px;
+  margin-bottom: 5px;
+  letter-spacing: 1px;
+  opacity: 0.8;
 }
 
 /* ==========================================================================
-   5. ENVIRONMENT CONTROL & DEADLINE MANAGEMENT
-   ========================================================================== */
+5. ENVIRONMENT CONTROL & DEADLINE MANAGEMENT
+========================================================================== */
 
 .deadline-zone {
-    background: var(--panel-bg);
-    border: 1px solid var(--border-color);
-    padding: 15px;
-    margin-bottom: 25px;
-    position: relative;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  padding: 15px;
+  margin-bottom: 25px;
+  position: relative;
 }
 
 .deadline-title {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-bottom: 10px;
-    letter-spacing: 1px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  letter-spacing: 1px;
 }
 
 .date-inputs {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 10px;
+  display: flex;
+  gap: 15px;
+  margin-bottom: 10px;
 }
 
 .input-group {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
 
 .input-group label {
-    font-size: 11px;
-    color: var(--text-muted);
+  font-size: 11px;
+  color: var(--text-muted);
 }
 
 .input-group input[type="date"] {
-    background: var(--bg-color);
-    border: 1px solid var(--border-color);
-    color: var(--text-main);
-    padding: 8px;
-    font-family: inherit;
-    font-size: 12px;
-    outline: none;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 8px;
+  font-family: inherit;
+  font-size: 12px;
+  outline: none;
 }
 
 .input-group input[type="date"]:focus {
-    border-color: var(--accent-gold);
+  border-color: var(--accent-gold);
+}
+
+/* Кастомный приглушенный выбор файлов в стиле Deus Ex */
+.custom-file-upload {
+  position: relative;
+  display: block;
+  width: 100%;
+  background: var(--bg-color);
+  border: 1px dashed var(--border-color);
+  padding: 10px;
+  box-sizing: border-box;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s ease-in-out;
+}
+.custom-file-upload:hover {
+  border-color: #ffb00044;
+  background: rgba(255, 176, 0, 0.02);
+}
+.custom-file-upload input[type="file"] {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.file-name-placeholder {
+  font-size: 11px;
+  color: #475569;
+  letter-spacing: 0.5px;
+}
+.file-name-placeholder.active-file {
+  color: var(--accent-gold);
 }
 
 /* ==========================================================================
-   6. DYNAMIC STATUSES, OUTPUTS & ACTIONS
-   ========================================================================== */
+6. DYNAMIC STATUSES, OUTPUTS & ACTIONS
+========================================================================== */
 
 #deadline-status {
-    font-size: 12px;
-    font-weight: bold;
-    margin-top: 5px;
+  font-size: 12px;
+  font-weight: bold;
+  margin-top: 5px;
 }
 
-/* Contextual color states for tracking deadlines */
 .status-ok { color: var(--neon-green); }
 .status-warn { color: #ffb000; }
 .status-crit { color: #ef4444; }
 
 .override-zone {
-    margin-top: 20px;
-    margin-bottom: 15px;
+  margin-top: 20px;
+  margin-bottom: 15px;
 }
 
-/* Disabled UI element overlay utility */
 .disabled-layer {
-    opacity: 0.4;
-    pointer-events: none;
+  opacity: 0.4;
+  pointer-events: none;
 }
 
 .result-section {
-    margin-top: 30px;
-    background: var(--accent-gold-dim);
-    border: 1px dashed var(--accent-gold);
-    padding: 20px;
-    text-align: center;
-    box-sizing: border-box;
+  margin-top: 30px;
+  background: var(--accent-gold-dim);
+  border: 1px dashed var(--accent-gold);
+  padding: 20px;
+  text-align: center;
+  box-sizing: border-box;
 }
 
 .result-section h2 {
-    margin: 0;
-    font-size: 18px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--text-main);
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-main);
 }
 
 #total-score {
-    color: var(--accent-gold);
-    font-size: 26px;
-    font-weight: bold;
-    text-shadow: 0 0 10px rgba(255, 176, 0, 0.4);
-    margin-left: 10px;
+  color: var(--accent-gold);
+  font-size: 26px;
+  font-weight: bold;
+  text-shadow: 0 0 10px rgba(255, 176, 0, 0.4);
+  margin-left: 10px;
 }
 
-/* Main control interface button */
-#reset-btn {
-    font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
-    background-color: var(--panel-bg);
-    border: 1px solid var(--accent-gold);
-    color: var(--accent-gold);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-size: 11px;
-    font-weight: bold;
-    padding: 10px 20px;
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
-    position: relative;
-    outline: none;
-    display: block;
-    margin-top: 25px;
+.hidden {
+  display: none !important;
 }
 
-#reset-btn:hover {
-    background-color: var(--accent-gold);
-    color: var(--bg-color);
-    box-shadow: 0 0 12px rgba(255, 176, 0, 0.4);
+.btn-mode {
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  width: 100%;
+  padding: 12px;
+  font-size: 12px;
+  transition: all 0.2s ease-in-out;
+}
+.btn-mode.ai-active {
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+  background-color: var(--accent-gold-dim);
+  box-shadow: 0 0 10px rgba(255, 176, 0, 0.15);
 }
 
-/* Optional icon alignment utility inside buttons */
+#reset-btn, .ai-btn {
+  font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+  background-color: var(--panel-bg);
+  border: 1px solid var(--accent-gold);
+  color: var(--accent-gold);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  position: relative;
+  outline: none;
+  display: block;
+  margin-top: 25px;
+}
+
+#reset-btn:hover, .ai-btn:hover {
+  background-color: var(--accent-gold);
+  color: var(--bg-color);
+  box-shadow: 0 0 12px rgba(255, 176, 0, 0.4);
+}
+
 #reset-btn span {
-    margin-right: 6px;
+  margin-right: 6px;
 }

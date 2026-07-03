@@ -16,14 +16,127 @@ document.addEventListener('DOMContentLoaded', () => {
     const deadlineStatus = document.getElementById('deadline-status');
     const penaltyInfo = document.getElementById('penalty-info');
 
-    /**
-     * Toggles the visibility of offline-specific penalty checkboxes and headers
-     * based on the currently selected lesson format (Offline vs. Online).
-     * Automatically unchecks hidden options and updates the overall score.
-     * 
-     * @function toggleFormatFields
-     * @returns {void} This function does not return a value.
-     */
+    // Переменные состояния ИИ-режима
+    let isAiMode = false;
+    const n8nWebhookUrl = "https://n8n.cloud";
+
+    // Функция обновления отображаемого имени файла в кастомном инпуте
+    window.updateFileName = function(inputId, placeholderId) {
+        const fileInput = document.getElementById(inputId);
+        const placeholder = document.getElementById(placeholderId);
+        
+        if (fileInput.files.length === 1) {
+            placeholder.innerText = `[ ${fileInput.files[0].name.toUpperCase()} ]`;
+            placeholder.classList.add('active-file');
+        } else if (fileInput.files.length > 1) {
+            placeholder.innerText = `[ ВЫБРАНО ФАЙЛОВ: ${fileInput.files.length} ]`;
+            placeholder.classList.add('active-file');
+        } else {
+            placeholder.innerText = inputId === 'task-file' ? '[ ВЫБРАТЬ ФАЙЛЫ ЗАДАНИЯ (МОЖНО НЕСКОЛЬКО) ]' : '[ ВЫБРАТЬ ФАЙЛЫ РАБОТЫ (МОЖНО НЕСКОЛЬКО) ]';
+            placeholder.classList.remove('active-file');
+        }
+    };
+
+    window.toggleGradeMode = function() {
+        isAiMode = !isAiMode;
+        const modeBtn = document.getElementById('mode-btn');
+        const aiPanel = document.getElementById('ai-grading-panel');
+
+        if (isAiMode) {
+            modeBtn.innerText = "Режим: ИИ (Автоматический анализ)";
+            modeBtn.classList.add('ai-active');
+            aiPanel.classList.remove('hidden');
+            aiPanel.classList.remove('disabled-layer');
+            
+            lessonFormatSelect.value = 'online';
+            toggleFormatFields();
+        } else {
+            modeBtn.innerText = "Режим: Мануально";
+            modeBtn.classList.remove('ai-active');
+            aiPanel.classList.add('hidden');
+            aiPanel.classList.add('disabled-layer');
+        }
+    };
+
+    function readFileAsText(file) {
+        return new Promise((resolve, reject) => {
+            if (!file) resolve("");
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = (e) => reject(e);
+            reader.readAsText(file);
+        });
+    }
+
+    window.runAiGrading = async function() {
+        const taskFiles = document.getElementById('task-file').files;
+        const studentFiles = document.getElementById('student-file').files;
+        const loadingText = document.getElementById('ai-loading');
+        const verdictBox = document.getElementById('ai-verdict-box');
+
+        if (taskFiles.length === 0 || studentFiles.length === 0) {
+            alert("Пожалуйста, загрузите файлы: и в раздел Заданий, и в раздел Студенческих работ!");
+            return;
+        }
+
+        loadingText.classList.remove('hidden');
+        verdictBox.classList.add('hidden');
+
+        try {
+            // Циклом склеиваем пачку файлов ТЗ в один структурированный блок текста
+            let combinedTaskContent = "";
+            for (const file of taskFiles) {
+                const content = await readFileAsText(file);
+                combinedTaskContent += `\n=== START_OF_FILE: ${file.name} ===\n${content}\n=== END_OF_FILE: ${file.name} ===\n`;
+            }
+
+            // Циклом склеиваем пачку файлов решений в один структурированный блок текста
+            let combinedStudentContent = "";
+            for (const file of studentFiles) {
+                const content = await readFileAsText(file);
+                combinedStudentContent += `\n=== START_OF_FILE: ${file.name} ===\n${content}\n=== END_OF_FILE: ${file.name} ===\n`;
+            }
+
+            const response = await fetch(n8nWebhookUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action: "gradez_eval",
+                    task: combinedTaskContent,
+                    solution: combinedStudentContent
+                })
+            });
+
+
+            if (response.ok) {
+                const data = await response.json();
+                
+                verdictBox.innerHTML = `<h3>[ СИСТЕМНЫЙ ВЕРДИКТ ИИ ]:</h3>${data.analysis_text}`;
+                verdictBox.classList.remove('hidden');
+
+                if (data.criteria_state) {
+                    document.getElementById('crit1').checked = !!data.criteria_state.crit1;
+                    document.getElementById('crit3').checked = !!data.criteria_state.crit3;
+                    document.getElementById('crit4').checked = !!data.criteria_state.crit4;
+
+                    if (data.criteria_state.completeness === 1) document.getElementById('crit2_1').checked = true;
+                    if (data.criteria_state.completeness === 2) document.getElementById('crit2_2').checked = true;
+                    if (data.criteria_state.completeness === 3) document.getElementById('crit2_3').checked = true;
+                }
+
+                calculateScore();
+
+            } else {
+                alert(`Ошибка ИИ-сервера n8n: ${response.status}`);
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Критическая ошибка отправки файлов на ИИ-анализ.");
+        } finally {
+            loadingText.classList.add('hidden');
+        }
+    };
+
     function toggleFormatFields() {
         const format = lessonFormatSelect.value;
         const offlineItems = document.querySelectorAll('.format-offline');
@@ -42,22 +155,12 @@ document.addEventListener('DOMContentLoaded', () => {
         calculateScore();
     }
 
-    /**
-     * Calculates the final student score based on selected criteria checkboxes,
-     * class type penalties, and late submission deadline tracking.
-     * Implements an unbreakable minimum floor and scale constraints.
-     * 
-     * @function calculateScore
-     * @returns {void} This function updates the DOM directly and does not return a value.
-     */
     function calculateScore() {
         const format = lessonFormatSelect.value;
         const isOnline = format === 'online';
         
-        // Multiplier config: 11th grade has a soft penalty (0.2), other grades have a strict penalty (0.4)
         const penaltyRate = grade11Checkbox.checked ? 0.2 : 0.4; 
 
-        // Extract dates and convert to standard Date objects
         const deadlineDate = deadlineInput.value ? new Date(deadlineInput.value) : null;
         const submissionDate = submissionInput.value ? new Date(submissionInput.value) : null;
         
@@ -67,18 +170,14 @@ document.addEventListener('DOMContentLoaded', () => {
             diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         }
 
-        // Configuration rule: Fixed grace period of 3 days applies to everyone
         const gracePeriod = 3;
         const overdueDays = diffDays > gracePeriod ? diffDays - gracePeriod : 0;
 
         let baseScore = 0;
-        
-        // Context rule: Offline format awards an initial +2 points for active workspace status
         if (!isOnline) {
             baseScore = 2;
         }
 
-        // Aggregate points strictly from visible and active checkbox/radio options
         checkboxes.forEach(checkbox => {
             const parentItem = checkbox.closest('.criterion-item');
             if (checkbox.checked && parentItem && parentItem.style.display !== 'none') {
@@ -88,7 +187,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let deadlinePenalty = 0;
 
-        // Process deadline tracking status messages and mathematical penalties
         if (deadlineDate && submissionDate) {
             if (diffDays <= 0) {
                 deadlineStatus.textContent = "Статус: Сдано вовремя";
@@ -108,7 +206,6 @@ document.addEventListener('DOMContentLoaded', () => {
             deadlineStatus.className = "status-warn";
         }
 
-        // Render late penalty overlay data panel
         if (deadlinePenalty > 0) {
             penaltyInfo.textContent = `[ Снижено баллов за просрочку дедлайна: -${deadlinePenalty} ]`;
             penaltyInfo.style.display = 'block';
@@ -118,22 +215,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let finalScore = baseScore;
 
-        // Compensation rule: Online learning hides Block 3, auto-compensating +2 discipline points
         if (isOnline && finalScore > 0) {
             finalScore += 2;
         }
 
-        // Deduct calculated late submission penalty
         finalScore -= deadlinePenalty;
 
-        // Hard minimum constraint: Keep at least 4 points if the base calculation reached 4 points
         if (baseScore >= 4 && finalScore < 4) {
             finalScore = 4;
         } else if (finalScore < 0) {
             finalScore = 0;
         }
 
-        // Scale max constraint: Cap calculations to fit inside the updated 12-point grading system
         if (finalScore > 12) {
             finalScore = 12;
         }
@@ -148,23 +241,22 @@ document.addEventListener('DOMContentLoaded', () => {
     deadlineInput.addEventListener('change', calculateScore);
     submissionInput.addEventListener('change', calculateScore);
 
-    /**
-     * Resets all form controls, inputs, and selected checkboxes to their default states.
-     * Re-triggers layout alignment configuration logic.
-     * 
-     * @listener resetBtn.click
-     * @returns {void} This listener modifies local scope variables and DOM properties directly.
-     */
     resetBtn.addEventListener('click', () => {
         checkboxes.forEach(cb => cb.checked = false);
         grade11Checkbox.checked = false;
         lessonFormatSelect.value = 'offline';
         deadlineInput.value = '';
         submissionInput.value = '';
+        
+        // Сбрасываем имена файлов в плейсхолдерах под мультивыбор
+        document.getElementById('task-file-name').innerText = '[ ВЫБРАТЬ ФАЙЛЫ ЗАДАНИЯ (МОЖНО НЕСКОЛЬКО) ]';
+        document.getElementById('task-file-name').classList.remove('active-file');
+        document.getElementById('student-file-name').innerText = '[ ВЫБРАТЬ ФАЙЛЫ РАБОТЫ (МОЖНО НЕСКОЛЬКО) ]';
+        document.getElementById('student-file-name').classList.remove('active-file');
+        
+        if(isAiMode) toggleGradeMode();
         toggleFormatFields();
     });
 
-    // Run initial workspace configuration on load
     toggleFormatFields();
 });
-

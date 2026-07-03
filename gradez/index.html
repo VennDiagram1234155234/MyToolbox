@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Система оценивания</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="scripts.js"></script>
+    <script src="scripts.js" defer></script>
 </head>
 <body>
     <div class="container">
@@ -38,9 +38,49 @@
             <div id="deadline-status" class="status-ok">Статус: В рамках дедлайна</div>
         </div>
 
+        <!-- КНОПКА ПЕРЕКЛЮЧЕНИЯ РЕЖИМА "ИИ / МАНУАЛЬНО" -->
+        <div style="margin-bottom: 25px;">
+            <button id="mode-btn" class="ai-btn btn-mode" onclick="toggleGradeMode()">Режим: Мануально</button>
+        </div>
+
+        <!-- СПОКОЙНАЯ ИИ-ПАНЕЛЬ С ПОДДЕРЖКОЙ МУЛЬТИВЫБОРА ФАЙЛОВ -->
+        <div id="ai-grading-panel" class="disabled-layer hidden" style="background: var(--panel-bg); border: 1px solid var(--border-color); padding: 20px; margin-bottom: 25px; position: relative;">
+            <div class="deadline-title" style="color: var(--text-muted);">[ // AUTOMATED_AI_EVALUATION ]</div>
+            
+            <div class="input-group" style="margin-bottom: 15px;">
+                <label style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px;">1. Описание заданий (ТЗ / Инструкции):</label>
+                <div class="custom-file-upload">
+                    <!-- ДОБАВЛЕН АТРИБУТ multiple -->
+                    <input type="file" id="task-file" accept=".txt,.js,.html,.css,.json" multiple onchange="updateFileName('task-file', 'task-file-name')">
+                    <span id="task-file-name" class="file-name-placeholder">[ ВЫБРАТЬ ФАЙЛЫ ЗАДАНИЙ (МОЖНО НЕСКОЛЬКО) ]</span>
+                </div>
+            </div>
+
+            <div class="input-group" style="margin-bottom: 20px;">
+                <label style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px;">2. Выполненные работы студента:</label>
+                <div class="custom-file-upload">
+                    <!-- ДОБАВЛЕН АТРИБУТ multiple -->
+                    <input type="file" id="student-file" accept=".txt,.js,.html,.css,.json" multiple onchange="updateFileName('student-file', 'student-file-name')">
+                    <span id="student-file-name" class="file-name-placeholder">[ ВЫБРАТЬ ФАЙЛЫ РАБОТЫ (МОЖНО НЕСКОЛЬКО) ]</span>
+                </div>
+            </div>
+
+            <button id="ai-scan-btn" class="ai-btn" style="width: 100%; margin: 0; padding: 12px; font-size: 11px;" onclick="runAiGrading()">
+                ЗАПУСТИТЬ ИИ-АНАЛИЗ РАБОТЫ
+            </button>
+
+            <!-- Спиннер загрузки -->
+            <div id="ai-loading" class="hidden" style="text-align: center; margin-top: 15px; color: var(--accent-gold); font-family: monospace; font-size: 11px; letter-spacing: 0.5px;">
+                [ СИСТЕМА АНАЛИЗИРУЕТ ФАЙЛЫ И СВЕРЯЕТ КРИТЕРИИ... ]
+            </div>
+
+            <!-- Блок текстового вердикта ИИ -->
+            <div id="ai-verdict-box" class="hidden" style="margin-top: 20px; padding: 15px; background: var(--bg-color); border: 1px solid var(--border-color); border-left: 3px solid var(--accent-gold); font-family: monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap;">
+            </div>
+        </div>
+
         <!-- Grading criteria configuration container -->
         <div id="criteria-list">
-            
             <!-- BLOCK 1: Technical Implementation Requirements (7 points max) -->
             <div class="category-title">// БЛОК 1: ТЕХНИЧЕСКАЯ ЧАСТЬ (7 баллов)</div>
             
@@ -49,7 +89,6 @@
                 <label for="crit1">Базовая логика (Код запускается, нет критических ошибок) (+2 б.)</label>
             </div>
             
-            <!-- Implementation completeness level (Exclusive radio selection) -->
             <div class="criterion-item">
                 <input type="radio" name="completeness" id="crit2_1" class="criterion-checkbox crit-tech" data-points="1">
                 <label for="crit2_1">⭐ Полнота реализации: Базовый уровень (+1 б.)</label>
