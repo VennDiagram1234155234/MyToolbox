@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система оценивания</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="scripts.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Система оценивания</h1>
+
+        <!-- Submission dates and environment control section -->
+        <div class="deadline-zone">
+            <div class="deadline-title">[ // SYSTEM_ENVIRONMENT_CONTROL ]</div>
+            
+            <div class="date-inputs">
+                <div class="input-group">
+                    <label for="deadline-date">Дедлайн:</label>
+                    <input type="date" id="deadline-date">
+                </div>
+                <div class="input-group">
+                    <label for="submission-date">Сдано:</label>
+                    <input type="date" id="submission-date">
+                </div>
+            </div>
+
+            <!-- Lesson delivery format switcher -->
+            <div class="input-group" style="margin-bottom: 10px;">
+                <label for="lesson-format">Формат урока:</label>
+                <select id="lesson-format" style="background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px; font-family: inherit; font-size: 12px; outline: none; cursor: pointer;">
+                    <option value="offline">ОЧНО</option>
+                    <option value="online">ДИСТАНЦИОННО</option>
+                </select>
+            </div>
+
+            <div id="deadline-status" class="status-ok">Статус: В рамках дедлайна</div>
+        </div>
+
+        <!-- Grading criteria configuration container -->
+        <div id="criteria-list">
+            
+            <!-- BLOCK 1: Technical Implementation Requirements (7 points max) -->
+            <div class="category-title">// БЛОК 1: ТЕХНИЧЕСКАЯ ЧАСТЬ (7 баллов)</div>
+            
+            <div class="criterion-item">
+                <input type="checkbox" id="crit1" class="criterion-checkbox crit-tech" data-points="2">
+                <label for="crit1">Базовая логика (Код запускается, нет критических ошибок) (+2 б.)</label>
+            </div>
+            
+            <!-- Implementation completeness level (Exclusive radio selection) -->
+            <div class="criterion-item">
+                <input type="radio" name="completeness" id="crit2_1" class="criterion-checkbox crit-tech" data-points="1">
+                <label for="crit2_1">⭐ Полнота реализации: Базовый уровень (+1 б.)</label>
+            </div>
+            <div class="criterion-item">
+                <input type="radio" name="completeness" id="crit2_2" class="criterion-checkbox crit-tech" data-points="2">
+                <label for="crit2_2">⭐⭐ Полнота реализации: Средний уровень (+2 б.)</label>
+            </div>
+            <div class="criterion-item">
+                <input type="radio" name="completeness" id="crit2_3" class="criterion-checkbox crit-tech" data-points="3">
+                <label for="crit2_3">⭐⭐⭐ Полнота реализации: Полный уровень (+3 б.)</label>
+            </div>
+            
+            <div class="criterion-item">
+                <input type="checkbox" id="crit3" class="criterion-checkbox crit-tech" data-points="2">
+                <label for="crit3">Формат сдачи (Правильные расширения, все файлы на месте) (+2 б.)</label>
+            </div>
+
+            <!-- BLOCK 2: Oral Defense and Code Understanding (3 points max) -->
+            <div class="category-title">// БЛОК 2: УСТНАЯ ЧАСТЬ И ЗАЩИТА (3 балла)</div>
+            
+            <div class="criterion-item">
+                <input type="checkbox" id="crit4" class="criterion-checkbox crit-tech" data-points="3">
+                <label for="crit4">Устная защита / Борьба с ИИ (Объяснение строк, изменение условий на лету) (+3 б.)</label>
+            </div>
+
+            <!-- BLOCK 3: Workspace Discipline and Penalties (Offline mode only) -->
+            <div class="category-title format-offline">// БЛОК 3: ШТРАФЫ</div>
+            
+            <div class="criterion-item format-offline" style="border-left-color: #ef4444;">
+                <input type="checkbox" id="crit5_sh" class="criterion-checkbox crit-penalty" data-points="-1">
+                <label for="crit5_sh" style="color: #ef4444;">[ ШТРАФ ] Дисциплина (шумит, ходит по классу без разрешения, трогает чужие ПК) (-1 б.)</label>
+            </div>
+            <div class="criterion-item format-offline" style="border-left-color: #ef4444;">
+                <input type="checkbox" id="crit6_sh" class="criterion-checkbox crit-penalty" data-points="-1">
+                <label for="crit6_sh" style="color: #ef4444;">[ ШТРАФ ] Цифровая гигиена (Игры, соцсети во время выполнения задания) (-1 б.)</label>
+            </div>
+            <div class="criterion-item format-offline" style="border-left-color: #ef4444;">
+                <input type="checkbox" id="crit7_sh" class="criterion-checkbox crit-penalty" data-points="-2">
+                <label for="crit7_sh" style="color: #ef4444;">[ ШТРАФ ] Техника безопасности (Ест за ПК, портит технику, матерится, переходит на личности) (-2 б.)</label>
+            </div>
+        </div>
+
+        <!-- Class grade modifier selector (Affects calculation rules) -->
+        <div class="class-type-zone" style="margin-top: 20px; margin-bottom: 15px;">
+            <label class="switch-label" style="cursor: pointer; user-select: none; font-size: 13px; letter-spacing: 0.5px; color: var(--text-main);">
+                <input type="checkbox" id="is-11th-grade" style="width: 18px; height: 18px; accent-color: var(--accent-gold); margin-right: 10px; vertical-align: middle;">
+                <span style="vertical-align: middle;">[ МОДИФИКАТОР: 11 КЛАСС ]</span>
+            </label>
+        </div>
+
+        <!-- Total calculated score and output dashboard -->
+        <div class="result-section">
+            <h2>Итоговая оценка: <span id="total-score">0</span></h2>
+            <div id="penalty-info" style="font-size: 11px; color: var(--text-muted); margin-top: 5px; display: none;"></div>
+        </div>
+
+        <button id="reset-btn" class="ai-btn" style="margin-top: 20px; padding: 10px;">🔄 Сбросить параметры</button>
+    </div>
+</body>
+</html>

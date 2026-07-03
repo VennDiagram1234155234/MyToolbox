@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyToolbox</title>
+    <style>
+        :root {
+            --bg-color: #0d0f12;
+            --panel-bg: #14181f;
+            --accent-gold: #ffb000;
+            --accent-gold-dim: #cca133;
+            --text-main: #e2e8f0;
+            --text-muted: #8a99ad;
+            --border-color: #262f3d;
+        }
+
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            max-width: 1100px;
+            margin: 20px auto;
+            padding: 0 20px;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+        }
+
+        h1 {
+            font-size: 28px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--accent-gold);
+            border-bottom: 2px solid var(--accent-gold);
+            padding-bottom: 15px;
+            margin-bottom: 40px;
+            text-shadow: 0 0 10px rgba(255, 176, 0, 0.2);
+        }
+
+        h1::before {
+            content: "[ // SYSTEM_ACCESS ] ";
+            font-size: 16px;
+            color: var(--text-muted);
+            vertical-align: middle;
+        }
+
+        .project-list {
+            list-style: none;
+            padding: 0px;
+            margin: 0;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0px 30px;
+        }
+
+        @media (max-width: 768px) {
+            .project-list {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .project-item {
+            background: var(--panel-bg);
+            margin-bottom: 20px;
+            padding: 20px;
+            border-left: 4px solid var(--accent-gold);
+            border-top: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+            transition: all 0.25s ease-in-out;
+            cursor: pointer;
+        }
+
+        .project-item:hover {
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 15px rgba(255, 176, 0, 0.1);
+            transform: translateX(5px);
+        }
+
+        .project-item a {
+            color: var(--text-main);
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 18px;
+            display: inline-block;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+            transition: color 0.2s;
+        }
+
+        .project-item:hover a {
+            color: var(--accent-gold);
+        }
+
+        .project-item p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        /* Декоративный уголок в стиле Deus Ex */
+        .project-item::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 0 0 10px 10px;
+            border-color: transparent transparent var(--border-color) transparent;
+        }
+
+        .project-item:hover::after {
+            border-color: transparent transparent var(--accent-gold) transparent;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>MyToolbox</h1>
+    
+    <ul class="project-list">
+        
+        <li class="project-item" onclick="window.location.href='./DuplicatesInJSON/index.html'">
+            <a href="./DuplicatesInJSON/index.html">duplicatesInJSON</a>
+            <p>Утилита дедупликации словарей. Поиск и фильтрация повторяющихся лексем с сохранением структуры данных.</p>
+        </li>
+
+        <li class="project-item" onclick="window.location.href='./EnglishProv2/index.html'">
+            <a href="./EnglishProv2/index.html">englishProv2</a>
+            <p>Модуль проверки языковых навыков. Интерактивная среда для разбора и тестирования английского вокабуляра.</p>
+        </li>
+
+        <li class="project-item" onclick="window.location.href='./htmlpdf/index.html'">
+            <a href="./htmlpdf/index.html">htmlpdf</a>
+            <p>Конвертер документов. Инструмент экспорта сверстанных HTML-шаблонов в фиксированный PDF формат.</p>
+        </li>
+
+        <li class="project-item" onclick="window.location.href='./Countries and regions/index.html'">
+            <a href="./Countries and regions/index.html">countries and regions</a>
+            <p>Географическая база данных. Информационный справочник по странам, регионам и территориальным границам.</p>
+        </li>
+
+        <li class="project-item" onclick="window.location.href='./luzk/index.html'">
+            <a href="./luzk/index.html">luzk</a>
+            <p>Мини-проект Luzk. Кастомный скрипт автоматизации или локальный веб-интерфейс.</p>
+        </li>
+
+        <li class="project-item" onclick="window.location.href='./gradez/index.html'">
+            <a href="./gradez/index.html">gradez</a>
+            <p>Система оценивания. Инструмент для оценки и анализа работ в школе или универе.</p>
+        </li>
+
+        <li class="project-item" onclick="window.location.href='./AIPromptStudio/index.html'">
+            <a href="./AIPromptStudio/index.html">ai prompt studio</a>
+            <p>Онлайн-блокнот для ИИ промптов</p>
+        </li>
+
+    </ul>
+
+</body>
+</html>

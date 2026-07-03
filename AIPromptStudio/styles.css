@@ -1,0 +1,230 @@
+body {
+    font-family: 'Consolas', 'Courier New', monospace;
+    background-color: #0b0c10;
+    color: #cbd5e1;
+    margin: 0;
+    padding: 25px;
+    font-size: 13px;
+}
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+h1 {
+    color: #ffb700;
+    font-size: 18px;
+    margin: 0 0 10px 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.system-tag {
+    color: #64748b;
+    font-size: 14px;
+    margin-right: 5px;
+}
+.header-line {
+    width: 100%;
+    height: 1px;
+    background-color: #ffb700;
+    margin-bottom: 25px;
+}
+.main-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+}
+@media (max-width: 768px) {
+    .main-layout { grid-template-columns: 1fr; }
+}
+h2 {
+    color: #ffb700;
+    font-size: 13px;
+    text-transform: uppercase;
+    margin-top: 0;
+    margin-bottom: 15px;
+    letter-spacing: 1px;
+}
+
+/* Компактные поля ввода в стиле Deus Ex */
+input, select, textarea {
+    width: 100%;
+    padding: 10px;
+    background-color: #0e1017;
+    border: 1px solid #1e293b;
+    border-radius: 0px;
+    color: #fff;
+    box-sizing: border-box;
+    margin-bottom: 12px;
+    font-size: 13px;
+    font-family: inherit;
+}
+input::placeholder, textarea::placeholder {
+    color: #475569;
+}
+textarea {
+    height: 160px;
+    resize: vertical;
+}
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #ffb700;
+    background-color: #111420;
+}
+
+/* Кнопки как в Конвертере файлов */
+.btn {
+    padding: 10px 15px;
+    border: 1px solid #ffb700;
+    border-radius: 0px;
+    background-color: transparent;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: inherit;
+    transition: all 0.15s ease;
+    width: 100%;
+}
+.btn-success { 
+    border-color: #ffb700; 
+    color: #ffb700; 
+}
+.btn-success:hover { 
+    background-color: rgba(255, 183, 0, 0.08); 
+}
+.btn-primary { 
+    border-color: #ffb700; 
+    color: #ffb700; 
+}
+.btn-primary:hover { 
+    background-color: rgba(255, 183, 0, 0.08); 
+}
+.btn-secondary { 
+    border-color: #475569; 
+    color: #94a3b8; 
+}
+.btn-secondary:hover { 
+    border-color: #94a3b8; 
+    color: #fff; 
+}
+
+/* Панели с тонкими рамками */
+.editor-panel, .library-panel {
+    border: 1px solid #ffb700;
+    padding: 20px;
+    background-color: #0b0c10;
+}
+
+/* Фильтры категорий */
+.filter-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+.btn-filter {
+    background: transparent;
+    border: 1px solid #1e293b;
+    color: #64748b;
+    padding: 5px 10px;
+    font-family: inherit;
+    font-size: 11px;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+.btn-filter:hover {
+    border-color: #ffb700;
+    color: #ffb700;
+}
+.btn-filter.active {
+    border-color: #ffb700;
+    color: #ffb700;
+    background-color: rgba(255, 183, 0, 0.05);
+}
+
+.search-box input { margin-bottom: 15px; }
+
+/* Список карточек */
+.prompts-list {
+    max-height: 400px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.prompts-list::-webkit-scrollbar { width: 3px; }
+.prompts-list::-webkit-scrollbar-track { background: #0b0c10; }
+.prompts-list::-webkit-scrollbar-thumb { background: #ffb700; }
+
+.prompt-card {
+    background-color: #0e1017;
+    border: 1px solid #1e293b;
+    padding: 12px;
+    border-radius: 0px;
+}
+.prompt-card:hover {
+    border-color: #ffb700;
+}
+.prompt-card h3 { 
+    margin-top: 0; 
+    margin-bottom: 6px; 
+    color: #fff; 
+    font-size: 13px; 
+    text-transform: uppercase; 
+}
+.prompt-card p {
+    font-size: 12px;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 12px;
+}
+.card-actions { display: flex; gap: 8px; }
+.card-actions button {
+    padding: 5px 10px;
+    font-size: 11px;
+    border: 1px solid transparent;
+    border-radius: 0px;
+    cursor: pointer;
+    font-family: inherit;
+    text-transform: uppercase;
+}
+.btn-action-copy { background-color: transparent; border-color: #38bdf8; color: #38bdf8; }
+.btn-action-copy:hover { background-color: rgba(56, 189, 248, 0.08); }
+.btn-action-delete { background-color: transparent; border-color: #ef4444; color: #ef4444; }
+.btn-action-delete:hover { background-color: rgba(239, 68, 68, 0.08); }
+
+/* Модальное окно терминала */
+.modal {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(5, 5, 8, 0.85);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000;
+}
+.modal.hidden { display: none; }
+.modal-content {
+    background-color: #0b0c10;
+    border: 1px solid #ffb700;
+    padding: 20px;
+    border-radius: 0px;
+    width: 90%;
+    max-width: 550px;
+}
+.modal-actions { display: flex; gap: 12px; margin-top: 12px; }
+.var-input-group { margin-bottom: 10px; }
+.var-input-group label { display: block; font-size: 11px; color: #ffb700; margin-bottom: 4px; text-transform: uppercase; }
+
+.btn-action-edit { 
+    background-color: transparent; 
+    border: 1px solid #10b981 !important; 
+    color: #10b981; 
+}
+.btn-action-edit:hover { 
+    background-color: rgba(16, 185, 129, 0.08); 
+}
+.card-tag {
+    display: none; /* Скрываем теги категорий, так как мы их удалили */
+}

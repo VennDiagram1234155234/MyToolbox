@@ -1,0 +1,450 @@
+:root {
+    --bg: #0d0f12;                /* Глибокий кіберпанк фон */
+    --panel: #14181f;             /* Темні панелі Deus Ex */
+    --text: #e2e8f0;              /* Світлий текст */
+    --muted: #8a99ad;             /* Приглушений системний текст */
+    --accent: #ffb000;            /* Фірмовий янтарно-золотий */
+    --accent-dim: rgba(255, 176, 0, 0.1);
+    --border-color: #262f3d;      /* Технологічні рамки */
+}
+
+* {
+    box-sizing: border-box;
+    font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+}
+
+@media print {
+    .no-print { display: none; }
+}
+
+body {
+    margin: 0;
+    color: var(--text);
+    background: var(--bg);
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    -webkit-font-smoothing: antialiased;
+}
+
+.app {
+    display: grid;
+    grid-template-columns: 560px 360px;
+    gap: 20px;
+    max-width: 960px;
+    width: 100%;
+}
+
+.map-wrap,
+.panel {
+    background: var(--panel);
+    border-top: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    border-left: 4px solid var(--accent); /* Золота плашка зліва як у MyToolbox */
+    position: relative;
+    overflow: auto;
+}
+
+.map-wrap {
+    padding: 15px;
+}
+
+/* ІГРОВА КАРТА — Зробили фон значно темнішим та прибрали білі рамки */
+.map {
+    position: relative;
+    width: 540px;
+    height: 660px;
+    margin: 0 auto;
+    background-color: #222834 !important; /* Цвет изменен на более светлый графитовый */
+    border: 1px solid #ddd;
+    overflow: hidden;
+}
+
+.zoom-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.zoom-row input[type="range"] {
+    flex: 1;
+    accent-color: var(--accent);
+}
+
+.map-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.borders {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: auto;
+    display: block;
+    z-index: 1;
+}
+
+/* Кордони та шари мапи не чіпаємо, лише пом'якшуємо обведення */
+.country-border {
+    fill: none;
+    stroke: #000 !important; /* Возвращен исходный черный цвет */
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+}
+
+.region-border {
+    fill: none;
+    stroke: #000 !important; /* Возвращен исходный черный цвет */
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.regions-layer {
+    pointer-events: auto;
+}
+
+.region-shape {
+    stroke-width: 2;
+    stroke-linejoin: round;
+    cursor: pointer;
+    transition: fill 0.12s ease, stroke 0.12s ease, stroke-width 0.12s ease;
+    /* Убрали принудительное переопределение цвета, цвета теперь снова берутся из JS */
+}
+
+/* Подсветка выбранного региона */
+.region-shape.selected {
+    stroke: #2563eb !important; /* Исходный синий цвет выделения */
+    stroke-width: 5;
+}
+
+.internal-boundary {
+    stroke: #000 !important; /* Возвращен исходный черный цвет */
+    stroke-width: 3;
+    stroke-linecap: round;
+    pointer-events: none;
+}
+
+/* Кнопки вибору регіонів на карті */
+.region-btn {
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid #0d0f12 !important;
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    z-index: 5;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+.region-btn.selected {
+    outline: 3px solid var(--accent) !important;
+    z-index: 2;
+}
+
+.capital-star {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+    color: var(--accent);
+    text-shadow: 0 0 8px rgba(255, 176, 0, 0.6);
+    z-index: 10;
+    pointer-events: none;
+}
+
+.reinforcement-token {
+    position: absolute;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    border: 2px solid var(--accent) !important;
+    background: #202632 !important;
+    color: var(--accent) !important;
+    font-weight: 800;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+    cursor: grab;
+    user-select: none;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+
+.factory-icon {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 6;
+    width: 40px;  /* Задаем фиксированный размер для точного центрирования */
+    height: 40px;
+}
+
+.factory-gear {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px; /* Оставляем оригинальный размер шестеренки */
+    opacity: 0.9;
+    line-height: 1;
+    z-index: 1;
+}
+
+.factory-icon .factory-count {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 11px; /* Сделали шрифт чуть меньше, чтобы он красиво вписывался внутрь шестеренки */
+    font-weight: 900;
+    color: #fff !important;
+    z-index: 5; /* Выталкивает текст на передний план */
+    line-height: 1;
+    text-shadow: 0 1px 0 #000, 0 0 4px #000; /* Черная тень, чтобы белая цифра не терялась */
+}
+
+/* Права панель інтерфейсу */
+.panel {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.panel h1 {
+    margin: 0;
+    font-size: 20px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.panel h1::before {
+    content: "[ // STRATEGY ] ";
+    font-size: 11px;
+    color: var(--muted);
+}
+
+.muted {
+    color: var(--muted);
+    font-size: 12px;
+    margin: -10px 0 10px 0;
+}
+
+/* Блок статусу */
+.status {
+    border: 1px solid var(--border-color);
+    padding: 15px;
+    background: #11141a;
+}
+
+.status p {
+    margin: 8px 0;
+    font-size: 13px;
+    color: var(--text-main);
+}
+
+.status strong {
+    color: var(--accent);
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+}
+
+/* Сітки кнопок управління */
+.controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+button {
+    border: 1px solid var(--border-color);
+    background: #1a212b;
+    color: var(--text-main);
+    padding: 12px 10px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.2s ease-in-out;
+}
+
+button:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-dim);
+}
+
+button:disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    grid-column: 1 / -1;
+    font-size: 14px;
+    padding: 15px;
+}
+
+.btn-primary:hover {
+    background: var(--accent) !important;
+    color: var(--bg) !important;
+    box-shadow: 0 0 15px rgba(255, 176, 0, 0.25);
+}
+
+.btn-danger { border-color: rgba(239, 68, 68, 0.4); color: #ff6b6b; }
+.btn-danger:hover:not(:disabled) { border-color: #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.05); }
+
+.btn-success { border-color: rgba(16, 185, 129, 0.4); color: #51cf66; }
+.btn-success:hover:not(:disabled) { border-color: #10b981; color: #10b981; background: rgba(16, 185, 129, 0.05); }
+
+/* Випадаючі списки мап */
+select {
+    padding: 10px;
+    background: #0d0f12;
+    border: 1px solid var(--border-color);
+    color: #fff;
+    font-family: inherit;
+    font-size: 13px;
+}
+
+select:focus {
+    border-color: var(--accent);
+    outline: none;
+}
+
+/* Ігровий консольний лог */
+.log {
+    border: 1px solid var(--border-color);
+    height: 220px;
+    overflow: auto;
+    padding: 15px;
+    background: #090b0e;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #cbd5e1;
+    text-align: left;
+}
+
+.log p {
+    margin: 4px 0;
+    border-bottom: 1px dashed rgba(38, 47, 61, 0.3);
+    padding-bottom: 4px;
+}
+
+/* Оверлеї (Модальні вікна передачі ходу) */
+.pass-overlay, .units-overlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(5, 7, 10, 0.85);
+    z-index: 30;
+    backdrop-filter: blur(4px);
+}
+
+.pass-overlay.show, .units-overlay.show {
+    display: flex;
+}
+
+.pass-card, .units-card {
+    width: min(400px, 92vw);
+    background: var(--panel);
+    border: 1px solid var(--border-color);
+    border-top: 4px solid var(--accent);
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+}
+
+.pass-card h2, .units-card h3 {
+    margin: 0 0 10px;
+    color: var(--accent);
+    text-transform: uppercase;
+    font-size: 18px;
+    letter-spacing: 1px;
+}
+
+.pass-card p, .units-meta {
+    margin: 0 0 20px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+/* Кастомний нумпад для введення кількості юнітів */
+.units-display {
+    border: 1px solid var(--border-color);
+    background: #0d0f12;
+    color: var(--accent);
+    min-height: 52px;
+    padding: 10px 15px;
+    margin-bottom: 15px;
+    text-align: right;
+    font-size: 26px;
+    font-weight: bold;
+}
+
+.units-keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.units-keypad button {
+    padding: 14px;
+    font-size: 18px;
+    background: #1a212b;
+    border-color: var(--border-color);
+    color: #fff;
+}
+
+.units-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.units-actions .cancel-btn { background: #262f3d; color: var(--text-muted); }
+.units-actions .ok-btn { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+/* Декоративний зрізаний куточок на панелях */
+.map-wrap::after, .panel::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0 0 10px 10px;
+    border-color: transparent transparent var(--bg) transparent;
+}

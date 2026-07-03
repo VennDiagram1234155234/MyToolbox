@@ -1,0 +1,394 @@
+/* ==========================================================================
+   1. DESIGN SYSTEM VARIABLES & TOKENS
+   ========================================================================== */
+
+:root {
+    --bg-color: #0d0f12;
+    --panel-bg: #14181f;
+    --accent-gold: #ffb000;
+    --accent-gold-dim: #cca133;
+    --text-main: #e2e8f0;
+    --text-muted: #8a99ad;
+    --border-color: #262f3d;
+    --error-red: #ef4444;
+    --green-ok: #22c55e;
+    --yellow-warn: #eab308;
+    --orange-med: #f97316;
+}
+
+/* ==========================================================================
+   2. GLOBAL BODY & ACCESSIBILITY RESETS
+   ========================================================================== */
+
+body {
+    font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    -webkit-font-smoothing: antialiased;
+    box-sizing: border-box;
+}
+
+/* ==========================================================================
+   3. CORE CONTAINER LAYOUT (DEUS EX CYBERPUNK STYLE)
+   ========================================================================== */
+
+.container {
+    background-color: var(--panel-bg);
+    padding: 30px;
+    border-left: 4px solid var(--accent-gold);
+    border-top: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    max-width: 480px;
+    width: 100%;
+    text-align: center;
+    position: relative;
+    box-sizing: border-box;
+}
+
+/* Decorative diagonal corner notch cutout */
+.container::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0 0 12px 12px;
+    border-color: transparent transparent var(--bg-color) transparent;
+}
+
+/* ==========================================================================
+   4. TYPOGRAPHY & HEADER LINKS
+   ========================================================================== */
+
+h1 {
+    color: var(--accent-gold);
+    margin-top: 10px;
+    margin-bottom: 30px;
+    font-size: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    text-align: left;
+    text-shadow: 0 0 10px rgba(255, 176, 0, 0.15);
+}
+
+/* Functional core subsystem identification title prefix */
+h1::before {
+    content: "[ // CORE_MODULE ] ";
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: normal;
+}
+
+/* ==========================================================================
+   5. DATA INGESTION FORM INTERFACES
+   ========================================================================== */
+
+.input-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-muted);
+    font-size: 13px;
+    letter-spacing: 0.5px;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    background-color: #0d0f12;
+    color: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+input:focus {
+    border-color: var(--accent-gold);
+    outline: none;
+    box-shadow: 0 0 8px rgba(255, 176, 0, 0.1);
+}
+
+/* ==========================================================================
+   6. UI CONTROLS & INTERACTION TRIGGERS
+   ========================================================================== */
+
+button {
+    width: 100%;
+    padding: 14px;
+    background-color: transparent;
+    color: var(--accent-gold);
+    border: 1px solid var(--accent-gold);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    cursor: pointer;
+    margin-bottom: 12px;
+    transition: all 0.2s ease-in-out;
+    text-transform: uppercase;
+}
+
+button:hover {
+    background-color: var(--accent-gold);
+    color: var(--bg-color);
+    box-shadow: 0 0 15px rgba(255, 176, 0, 0.2);
+}
+
+/* Secondary control layout modifications (Calendars switcher buttons) */
+.sec-btn {
+    background-color: #1a1f29;
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+}
+
+.sec-btn:hover {
+    background-color: transparent;
+    border-color: var(--text-main);
+    color: #fff;
+    box-shadow: none;
+}
+
+/* Multi-column layout buttons panel mapping */
+.btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 5px;
+}
+
+.btn-row button {
+    flex: 1;
+}
+
+/* ==========================================================================
+   7. SEVERE MILITARY AIR THREAT CONTROLS & BOXES
+   ========================================================================== */
+
+.threat-btn {
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #ff6b6b;
+}
+
+.threat-btn:hover {
+    border-color: var(--error-red) !important;
+    color: var(--error-red) !important;
+    background-color: rgba(239, 68, 68, 0.05);
+}
+
+.threat-box {
+    margin-top: 15px;
+    padding: 15px;
+    background-color: #161212;
+    border-left: 2px solid var(--error-red);
+    border-top: 1px solid #3a1616;
+    border-right: 1px solid #3a1616;
+    border-bottom: 1px solid #3a1616;
+    text-align: left;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.threat-percent {
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--error-red);
+    text-align: center;
+    margin: 5px 0;
+    text-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+}
+
+/* ==========================================================================
+   8. APPLICATION GLOBAL LOCALIZATION SWITCHER
+   ========================================================================== */
+
+.lang-selector {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.lang-btn {
+    width: auto;
+    padding: 6px 12px;
+    font-size: 12px;
+    background-color: #1a1f29;
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+    margin-bottom: 0;
+}
+
+.lang-btn:hover, .lang-btn.active {
+    background-color: var(--accent-gold);
+    color: var(--bg-color);
+    border-color: var(--accent-gold);
+    box-shadow: 0 0 10px rgba(255, 176, 0, 0.2);
+}
+
+/* ==========================================================================
+   9. BIORHYTHMS & ENERGY EVALUATION METRICS PANEL
+   ========================================================================== */
+
+.result-box {
+    margin-top: 25px;
+    padding-top: 15px;
+    border-top: 1px dashed var(--border-color);
+}
+
+.verdict {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    line-height: 1.5;
+    text-align: left;
+}
+
+.luck-percent {
+    font-size: 56px;
+    font-weight: 900;
+    color: var(--accent-gold);
+    text-shadow: 0 0 25px rgba(255, 176, 0, 0.25);
+    margin: 10px 0;
+}
+
+.cycle-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    background-color: #1a1f29;
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--accent-gold);
+    border: 1px solid var(--border-color);
+}
+
+.details {
+    text-align: left;
+    background: #0d0f12;
+    padding: 15px;
+    border-left: 2px solid var(--accent-gold);
+    font-size: 13px;
+    color: #cbd5e1;
+    line-height: 1.6;
+    border-top: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* ==========================================================================
+   10. CALENDAR RENDER ENGINE & CELLS GRID CONFIGURATION
+   ========================================================================== */
+
+.calendar-box {
+    margin-top: 20px;
+    background: #0d0f12;
+    padding: 15px;
+    border: 1px solid var(--border-color);
+}
+
+/* Strict layout override for severe threat monitoring grids */
+.threat-cal-box {
+    border-color: #5c1919 !important;
+}
+
+.cal-nav-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 0 5px;
+}
+
+.cal-nav-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--accent-gold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.threat-cal-box .cal-nav-title {
+    color: #ff6b6b;
+}
+
+.cal-nav-arrows {
+    display: flex;
+    gap: 10px;
+}
+
+.cal-arrow-btn {
+    background-color: #1a1f29;
+    border: 1px solid var(--border-color);
+    color: #fff;
+    padding: 5px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    width: auto;
+    margin-bottom: 0;
+}
+
+.cal-arrow-btn:hover {
+    background-color: transparent;
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
+}
+
+.cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.cal-day-head {
+    font-size: 11px;
+    font-weight: bold;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    padding-bottom: 5px;
+}
+
+.cal-cell {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 12px;
+    font-weight: bold;
+    color: #0d0f12;
+    cursor: help;
+    transition: transform 0.1s;
+}
+
+.cal-cell:hover {
+    transform: scale(1.15);
+}
+
+.cal-cell-empty {
+    aspect-ratio: 1;
+}
+
+/* Soft color contextual blending representations for the calendar cells */
+.bg-crit { background-color: var(--error-red); color: #fff; }
+.bg-low { background-color: var(--orange-med); color: #fff; }
+.bg-med { background-color: var(--yellow-warn); color: #0d0f12; }
+.bg-high { background-color: var(--green-ok); color: #fff; }
+
+/* Military air threats calendar state color definitions */
+.bg-threat-low { background-color: var(--green-ok); color: #fff; }
+.bg-threat-med { background-color: var(--yellow-warn); color: #0d0f12; }
+.bg-threat-high { background-color: var(--error-red); color: #fff; }

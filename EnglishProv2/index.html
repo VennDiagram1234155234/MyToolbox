@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Mastery Swipe</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="scripts.js" defer></script>
+</head>
+<body>
+    <div class="level-selector">
+        <button class="level-btn" onclick="setLevel('A1')">A1</button>
+        <button class="level-btn" onclick="setLevel('A2')">A2</button>
+        <button class="level-btn" onclick="setLevel('B1')">B1</button>
+        <button class="level-btn" onclick="setLevel('B2')">B2</button>
+        <button class="level-btn active" onclick="setLevel('C1')">C1</button>
+        <button class="level-btn" onclick="setLevel('C2')">C2</button>
+    </div>
+
+    <button class="level-btn mode-btn" id="modeBtn" onclick="toggleMode()">
+        Режим: Офлайн
+    </button>
+
+    <button class="level-btn reset-btn" 
+        onclick="resetProgress()" 
+        onmouseover="this.style.background='rgba(220, 53, 69, 0.3)'; 
+        this.style.borderColor='rgba(220, 53, 69, 0.8)';" 
+        onmouseout="this.style.background='rgba(220, 53, 69, 0.15)'; 
+        this.style.borderColor='rgba(220, 53, 69, 0.4)';">
+        Скинути прогрес
+    </button>
+
+    <div class="drop-zone zone-left" id="zoneL">ВІДКЛАСТИ</div>
+    <div class="drop-zone zone-top" id="zoneT">ПОВТОРИТИ</div>
+    <div class="drop-zone zone-right" id="zoneR">ВИВЧЕНО</div>
+    <div class="stack" id="stack"></div>
+    <div class="status-info" id="status">ЗАВАНТАЖЕННЯ...</div>
+</body>
+</html>

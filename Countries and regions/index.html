@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Countries and regions</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="scripts.js" defer></script>
+  <link
+    rel="icon"
+    type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232563eb'/%3E%3Ccircle cx='32' cy='32' r='18' fill='none' stroke='%23ffffff' stroke-width='3'/%3E%3Cpath d='M16 32h32' stroke='%23ffffff' stroke-width='2' opacity='0.75'/%3E%3Cpath d='M32 14c7 8 7 28 0 36-7-8-7-28 0-36Z' fill='%23ffffff' opacity='0.22'/%3E%3Cpath d='M32 21l2.1 6.3h6.7l-5.4 3.9 2.1 6.3-5.5-3.9-5.5 3.9 2.1-6.3-5.4-3.9h6.7L32 21Z' fill='%23ffffff' opacity='0.85'/%3E%3C/svg%3E"
+  />
+</head>
+
+<body>
+  <div class="app">
+    <div class="map-wrap">
+      <div class="map" id="map">
+        <img id="mapBg" class="map-bg" alt="Map" />
+        <svg class="borders" viewBox="0 0 540 660" aria-hidden="true" id="mapSvg">
+          <g id="regionsLayer" class="regions-layer"></g>
+          <g id="boundariesLayer"></g>
+          <!-- Dev tool -------------------------------------------------------------------------------------------->
+          <!--<g id="vertexLabelsLayer"></g>-->
+          <!--End of Dev tool -------------------------------------------------------------------------------------->
+        </svg>
+        <div id="reinforcementToken" class="reinforcement-token">+0</div>
+      </div>
+    </div>
+    <div class="panel">
+      <h1>Countries and regions</h1>
+      <p class="muted">by @vennerkurh 2026</p>
+
+      <div class="status">
+        <p><strong>Current move:</strong> <span id="turnText"></span></p>
+        <p><strong>Mode:</strong> <span id="modeText"></span></p>
+        <p><strong>Status:</strong> <span id="warText"></span></p>
+      </div>
+
+      <div class="controls">
+        <button id="moveModeBtn" class="btn-secondary">Movement mode</button>
+        <button id="attackModeBtn" class="btn-danger">Attack mode</button>
+        <button id="truceBtn" class="btn-success">Declare a truce</button>
+        <button id="warBtn" class="btn-danger">Declare war</button>
+      </div>
+
+      <div class="controls">
+        <button id="formAllianceBtn" class="btn-secondary">Form alliance</button>
+        <button id="breakAllianceBtn" class="btn-secondary">Break alliance</button>
+      </div>
+
+      <div class="controls">
+        <button id="factoriesToggleBtn" class="btn-secondary">Factories: off</button>
+        <button id="buildFactoryBtn" class="btn-secondary" disabled>Build factories</button>
+        <button id="demolishFactoryBtn" class="btn-secondary" disabled style="grid-column: 1 / -1;">
+          Demolish factories
+        </button>
+      </div>
+
+      <button id="endTurnBtn" class="btn-primary">Proceed</button>
+      <button id="restartBtn" class="btn-secondary">Restart game</button>
+      
+      <!--<div style="display: flex; align-items: center; gap: 10px; background: #f3f4f6; padding: 8px 12px; border-radius: 8px; border: 1px solid #e5e7eb;">
+            <label style="display: flex; align-items: center; gap: 5px; font-weight: 600; font-size: 14px; cursor: pointer; color: #374151;">
+            <input type="checkbox" id="aiToggle" checked style="width: 16px; height: 16px; accent-color: #2563eb;">
+            Play with AI
+            </label>
+            
+            <select id="aiDifficulty" style="padding: 4px 8px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 14px; background: white; cursor: pointer;">
+                  <option value="easy">Easy</option>
+                  <option value="medium" selected>Medium</option>
+                  <option value="hard">Hard</option>
+            </select>
+
+            <div id="playerSelectContainer" style="display: flex; align-items: center; gap: 5px;">
+            <label for="playerCountrySelect" style="color: #374151; font-weight: bold; font-size: 14px;">Choose your country:</label>
+            <select id="playerCountrySelect" style="padding: 4px 8px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 14px; background: white; cursor: pointer;">
+            </select>
+            </div>
+      </div>-->
+
+      <div class="status">
+        <p><strong>Maps</strong></p>
+        <div class="controls">
+          <select id="mapSelect" style="padding:10px;border-radius:8px;border:1px solid #d1d5db;">
+            <option value="default">2 countries</option>
+            <option value="zombie_map">zombie apocalypse (7 countries v2)</option>
+          </select>
+          <button id="loadMapBtn" class="btn-secondary">Load map</button>
+        </div>
+        <div class="zoom-row">
+          <label for="zoomRange"><strong>Scale:</strong></label>
+          <input id="zoomRange" type="range" min="70" max="170" step="5" value="100" />
+          <span id="zoomText">100%</span>
+        </div>
+      </div>
+      <div class="log" id="log"></div>
+    </div>
+  </div>
+  <div id="passOverlay" class="pass-overlay" role="dialog" aria-modal="true">
+    <div class="pass-card">
+      <h2 id="passTitle">Pass the turn</h2>
+      <p id="passText">Pass the device to the next player.</p>
+      <button id="startTurnBtn" class="btn-primary">Start move</button>
+    </div>
+  </div>
+  <div id="unitsOverlay" class="units-overlay" role="dialog" aria-modal="true">
+    <div class="units-card">
+      <h3 id="unitsPromptTitle">Enter number</h3>
+      <p id="unitsPromptMeta" class="units-meta"></p>
+      <div id="unitsPromptDisplay" class="units-display"></div>
+      <div class="units-keypad">
+        <button data-digit="1">1</button>
+        <button data-digit="2">2</button>
+        <button data-digit="3">3</button>
+        <button data-digit="4">4</button>
+        <button data-digit="5">5</button>
+        <button data-digit="6">6</button>
+        <button data-digit="7">7</button>
+        <button data-digit="8">8</button>
+        <button data-digit="9">9</button>
+        <button id="unitsBackBtn">⌫</button>
+        <button data-digit="0">0</button>
+        <button id="unitsClearBtn">C</button>
+      </div>
+      <div class="units-actions">
+        <button id="unitsCancelBtn" class="cancel-btn">Cancel</button>
+        <button id="unitsOkBtn" class="ok-btn">OK</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

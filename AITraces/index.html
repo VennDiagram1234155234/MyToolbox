@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Детектор ИИ-следов в тексте</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="module">
+        import * as pdfjsLib from './build/pdf.mjs';
+        window.pdfjsLib = pdfjsLib;
+    </script>
+    <script src="scripts.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Поиск ИИ-следов в тексте</h1>
+        
+        <div class="drop-zone" id="dropZone">
+            <p>Перетащите сюда файл PDF / TXT или нажмите для выбора</p>
+            <input type="file" id="fileInput" accept=".txt,.pdf" hidden>
+        </div>
+
+
+        <div class="input-area">
+            <textarea id="textInput" placeholder="Или просто вставьте текст сюда для анализа..."></textarea>
+        </div>
+
+        <button id="analyzeBtn" class="btn">Анализировать текст</button>
+
+        <div id="results" class="hidden">
+            <h2>Результаты проверки</h2>
+            <div class="score-card">
+                <p>Вердикт: <span id="aiScore">-</span></p>
+                <p>Найдено маркеров текста: <span id="markerCount">-</span></p>
+            </div>
+            <h3>Текст с подсветкой ИИ-следов:</h3>
+            <div id="highlightedText" class="text-preview"></div>
+            <h3>Обнаруженные текстовые штампы:</h3>
+            <ul id="markerList"></ul>
+        </div>
+
+    </div>
+</body>
+</html>
+

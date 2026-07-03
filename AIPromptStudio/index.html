@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Prompt Studio — Сховище Промптів</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="scripts.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Системный заголовок в стиле Deus Ex, как в конвертере -->
+        <h1><span class="system-tag">[ // PROMPT_STORAGE ]</span> AI Prompt Studio</h1>
+        <div class="header-line"></div>
+
+
+        <div class="main-layout">
+            <!-- Панель створення/редагування -->
+            <div class="editor-panel">
+                <h2>Новий промпт</h2>
+                <input type="text" id="promptTitle" placeholder="Назва (напр., SEO Копірайтер, Генератор кодів)">
+                <textarea id="promptText" placeholder="Встав сюди текст свого промпту..."></textarea>
+                <button id="saveBtn" class="btn btn-success">Зберегти промпт</button>
+            </div>
+
+            <!-- Список збережених промптів -->
+            <div class="library-panel">
+                <h2>Моя бібліотека (<span id="promptCount">0</span>)</h2>
+
+                <div class="search-box">
+                    <input type="text" id="searchBar" placeholder="Введіть запит для пошуку...">
+                </div>
+
+                <div id="promptsList" class="prompts-list">
+                    <!-- Промпти рендеритимуться тут через JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальне вікно для швидкого копіювання та підстановки змінних -->
+    <div id="copyModal" class="modal hidden">
+        <div class="modal-content">
+            <h3 id="modalTitle">Скопіювати промпт</h3>
+            <div id="variablesContainer"></div>
+            <textarea id="modalPreview" readonly></textarea>
+            <div class="modal-actions">
+                <button id="closeModalBtn" class="btn btn-secondary">Закрити</button>
+                <button id="copyBtn" class="btn btn-primary">Скопіювати в буфер</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

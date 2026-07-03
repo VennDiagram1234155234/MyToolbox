@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Персональный Ассистент Продуктивности</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="scripts.js" defer></script>
+</head>
+<body>
+
+    <!-- Main tactical control and telemetry container -->
+    <div class="container">
+        
+        <!-- Localization control sub-panel -->
+        <div class="lang-selector">
+            <button class="lang-btn" data-lang="ru">RU</button>
+            <button class="lang-btn" data-lang="uk">UA</button>
+            <button class="lang-btn" data-lang="en">EN</button>
+        </div>
+
+        <h1 id="mainTitle">📅 Ассистент Ресурса и Энергии</h1>
+        
+        <!-- User data registration zone -->
+        <div class="input-group">
+            <label id="lblBirthDate" for="birthDate">Дата рождения (сохраняется локально):</label>
+            <input type="date" id="birthDate" required>
+        </div>
+        
+        <!-- Target tracking configuration zone -->
+        <div class="input-group">
+            <label id="lblTargetDate" for="targetDate">Целевая дата для планирования:</label>
+            <input type="date" id="targetDate" required>
+        </div>
+        
+        <!-- Core computational action triggers -->
+        <button id="calcBtn">Рассчитать готовность дня</button>
+        
+        <!-- Personal biorhythms calendar subsystem -->
+        <button id="toggleCalBtn" class="sec-btn">📅 Посмотреть календарь</button>
+        <div id="calendarBox" class="calendar-box"></div>
+        
+        <!-- Air raid threat assessment subsystem controls -->
+        <div class="btn-row">
+            <button id="threatBtn" class="sec-btn threat-btn">️ Риск обстрела</button>
+            <button id="toggleThreatCalBtn" class="sec-btn threat-btn">📅 Календарь угроз</button>
+        </div>
+        <div id="threatCalendarBox" class="calendar-box threat-cal-box"></div>
+        <div id="threatBox" class="threat-box"></div>
+
+        <!-- Analytical output metrics and visualization module -->
+        <div class="result-box" id="resultBox">
+            <div class="verdict" id="verdictText">Ваш жизненный тонус:</div>
+            <div class="luck-percent" id="luckValue">0%</div>
+            <div id="cycleInfo" class="cycle-badge"></div>
+            <br><br>
+            <div class="details" id="detailsText"></div>
+        </div>
+    </div>
+</body>
+</html>
+

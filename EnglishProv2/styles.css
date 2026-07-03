@@ -1,0 +1,232 @@
+:root { 
+    --bg: #0d0f12; 
+    --card-bg: #14181f; 
+    --accent: #ffb000;         /* Фирменный янтарно-золотой Deus Ex */
+    --accent-dim: #cca133;
+    --text-main: #e2e8f0; 
+    --text-dim: #8a99ad;
+    --dashed: #262f3d;          /* Более мягкий цвет для пунктирных линий */
+}
+
+body {
+    font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    background: var(--bg); 
+    color: var(--text-main);
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center;
+    height: 100vh; 
+    margin: 0; 
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Селектор уровней */
+.level-selector {
+    position: absolute; 
+    top: 30px; 
+    display: grid; 
+    grid-template-columns: repeat(6, 1fr); 
+    gap: 8px; 
+    z-index: 100;
+    background: #11141a; 
+    padding: 10px; 
+    border-radius: 8px; 
+    border: 1px solid var(--dashed);
+}
+
+.level-btn {
+    background: var(--card-bg); 
+    border: 1px solid var(--dashed); 
+    color: var(--text-dim);
+    padding: 8px 14px; 
+    border-radius: 6px; 
+    cursor: pointer; 
+    transition: all 0.25s ease-in-out; 
+    font-weight: 800; 
+    font-size: 0.8rem;
+    font-family: inherit;
+}
+
+.level-btn:hover {
+    border-color: var(--accent);
+    color: var(--text-main);
+}
+
+.level-btn.active { 
+    color: #0d0f12; 
+    background: var(--accent); 
+    border-color: var(--accent); 
+    box-shadow: 0 0 10px rgba(255, 176, 0, 0.3);
+}
+
+/* Зоны для свайпов — ГЕОМЕТРИЯ И ЛОГИКА СОХРАНЕНЫ */
+.drop-zone {
+    position: absolute; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    font-weight: 900; 
+    font-size: 1.2rem; 
+    color: #343f52;
+    text-transform: uppercase; 
+    pointer-events: none; 
+    transition: 0.3s; 
+    z-index: 1;
+    letter-spacing: 4px;
+}
+
+.zone-top { 
+    top: 0; left: 0; right: 0; height: 120px; 
+    border-bottom: 2px dashed var(--dashed);
+    align-items: flex-end; padding-bottom: 20px;
+}
+
+.zone-left { 
+    left: 0; top: 0; bottom: 0; width: 120px; 
+    writing-mode: vertical-rl; transform: rotate(180deg);
+    border-left: 2px dashed var(--dashed);
+    padding-left: 20px;
+}
+
+.zone-right { 
+    right: 0; top: 0; bottom: 0; width: 120px; 
+    writing-mode: vertical-rl;
+    border-left: 2px dashed var(--dashed);
+    padding-left: 20px;
+}
+
+/* Цвета зон при наведении карточки */
+.active-learned { color: #2ecc71; border-color: #2ecc71 !important; background: rgba(46, 204, 113, 0.03); }
+.active-review { color: var(--accent); border-color: var(--accent) !important; background: rgba(255, 176, 0, 0.03); }
+.active-deferred { color: #95a5a6; border-color: #95a5a6 !important; background: rgba(149, 165, 166, 0.03); }
+
+/* Контейнер стопки карт */
+.stack { 
+    position: relative; 
+    width: 340px; 
+    height: 450px; 
+    z-index: 10; 
+    margin-top: 40px; 
+}
+
+/* Карточка в стиле Deus Ex */
+.card {
+    position: absolute; 
+    width: 100%; 
+    height: 100%;
+    background: var(--card-bg); 
+    border-radius: 12px;                /* Сделали углы более аккуратными и строгими */
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    cursor: grab; 
+    transition: transform 0.1s ease, opacity 0.3s ease;
+    user-select: none; 
+    touch-action: none; 
+    border-left: 4px solid var(--accent); /* Фирменная плашка слева */
+    border-top: 1px solid var(--dashed);
+    border-right: 1px solid var(--dashed);
+    border-bottom: 1px solid var(--dashed);
+    padding: 40px; 
+    box-sizing: border-box;
+}
+
+.word { 
+    font-size: 2.4rem; 
+    font-weight: 800; 
+    margin-bottom: 8px; 
+    text-align: center; 
+    letter-spacing: -1px; 
+    color: var(--text-main);
+}
+
+.phonetic { 
+    color: var(--accent); 
+    font-size: 1.1rem; 
+    margin-bottom: 35px; 
+    letter-spacing: 1px;
+}
+
+.translation { 
+    font-size: 1.4rem; 
+    color: var(--text-dim); 
+    opacity: 0; 
+    transition: 0.3s;
+    text-align: center; 
+    font-weight: 300; 
+}
+
+.card.show-translation .translation { 
+    opacity: 1; 
+    color: var(--text-main); 
+}
+
+/* Кнопка аудио */
+.audio-btn {
+    background: #11141a; 
+    border: none; 
+    border-radius: 50%; 
+    width: 60px; 
+    height: 60px;
+    cursor: pointer; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    margin-bottom: 25px;
+    border: 1px solid var(--dashed);
+    transition: all 0.2s ease-in-out;
+}
+
+.audio-btn:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 10px rgba(255, 176, 0, 0.15);
+}
+
+.audio-btn svg { 
+    fill: var(--accent); 
+    width: 26px; 
+}
+
+/* Нижний статус загрузки / счетчик */
+.status-info { 
+    position: fixed; 
+    bottom: 30px; 
+    font-size: 0.8rem; 
+    color: var(--text-dim); 
+    font-weight: bold; 
+    letter-spacing: 2px; 
+}
+
+/* Кнопка сброса прогресса */
+.reset-btn {
+    position: fixed;
+    top: 40px; 
+    right: 10px; 
+    margin: 0;
+    white-space: nowrap;
+    z-index: 9999;
+}
+
+/* Кнопка переключения режимов */
+.mode-btn {
+  position: fixed;
+  top: 40px; 
+  right: 170px; /* Сдвинута левее, чтобы встать в ряд с кнопкой сброса */
+  margin: 0;
+  white-space: nowrap;
+  z-index: 9999;
+  border-color: var(--dashed);
+  color: var(--text-dim);
+}
+
+/* Эффект свечения при активном онлайн-режиме */
+.mode-btn.online-active {
+  color: #0d0f12; 
+  background: var(--accent); 
+  border-color: var(--accent);
+  box-shadow: 0 0 10px rgba(255, 176, 0, 0.3);
+}

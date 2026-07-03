@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Конвертер код-файлів у PDF</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="scripts.js" defer></script>
+</head>
+<body>
+    <h1>Конвертер файлів у PDF</h1>
+    <p>Підтримуються формати: .html, .css, .js, .json, .py, .dart, .pdf</p>
+
+    <!-- Global processing mode settings block -->
+    <div class="mode-option">
+        <label class="switch-label">
+            <input type="checkbox" id="mergeModeCheckbox">
+            <span>Об'єднати всі файли в один PDF</span>
+        </label>
+    </div>
+
+    <!-- AI prompt configuration and notepad management subsystem -->
+    <div class="ai-assistant-zone">
+        <textarea id="aiPrompt" placeholder="Впишіть сюди текст нового промпту, щоб зберегти його, або залиште порожнім..."></textarea>
+        
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button id="savePromptBtn" class="ai-btn" style="flex: 1; padding: 10px;">💾 Зберегти у блокнот</button>
+            <button id="toggleLibraryBtn" class="ai-btn" style="flex: 1; padding: 10px; border-color: #00b0ff; color: #00b0ff;">📋 Переглянути збережені промпти</button>
+        </div>
+        
+        <!-- Hidden by default container for rendering saved AI prompt cards -->
+        <div id="promptsLibraryList" style="display: none; margin-top: 15px; background: #121214; border: 1px solid #262f3d; padding: 15px; border-radius: 4px;"></div>
+    </div>
+
+    <!-- Core file upload drag-and-drop landing area -->
+    <div class="drop-zone" id="dropZone">
+        <span>Перетягніть файли сюди або натисніть для вибору</span>
+        <span id="folderSelectLink" class="folder-link" style="color: var(--accent-gold); text-decoration: underline; margin-left: 5px; cursor: pointer; display: inline-block; position: relative; z-index: 10;">або виберіть папку</span>
+    </div>
+    <input type="file" id="fileInput" multiple accept=".html,.css,.js,.json,.py,.dart,.pdf" style="display: none;">
+    <input type="file" id="folderInput" webkitdirectory directory style="display: none;">
+
+    <!-- Operational tracking progress indicators -->
+    <div class="progress-container" id="progressContainer">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <!-- Dynamic feedback status message output box -->
+    <div id="status"></div>
+</body>
+</html>

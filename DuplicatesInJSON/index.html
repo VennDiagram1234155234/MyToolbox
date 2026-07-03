@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Очистка JSON словаря от дубликатов</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="scripts.js" defer></script>
+</head>
+<body>
+    <h1>Очистка словаря от дубликатов</h1>
+    
+    <div class="container">
+        <div class="system-header">// SYSTEM_UTILITY: DE-DUPLICATION_MODULE</div>
+        
+        <label class="file-upload">
+            <input type="file" id="file-input" accept=".json">
+            <span id="upload-text">Кликните или перетащите сюда файл JSON</span>
+        </label>
+
+        <div id="error-block" class="error"></div>
+        
+        <div id="stats-block" class="stats">
+            <h3>[ АНАЛИЗ СТРУКТУРЫ ДАННЫХ ]</h3>
+            <p>Слов до обработки: <strong id="total-before">0</strong></p>
+            <p>Уникальных слов (оставлено): <strong id="total-after">0</strong></p>
+            <p>Удалено дубликатов: <strong id="total-deleted">0</strong></p>
+            
+            <div id="deleted-words-container">
+                <h4>Список удаленных дубликатов:</h4>
+                <div id="deleted-words-list"></div>
+            </div>
+        </div>
+
+        <button id="download-btn">СКАЧАТЬ ОЧИЩЕННЫЙ JSON</button>
+    </div>
+</body>
+</html>
