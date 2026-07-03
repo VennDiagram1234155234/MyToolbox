@@ -158,11 +158,20 @@ async function handleFile(file) {
 // Кнопка анализа текста
 if (analyzeBtn) {
     analyzeBtn.addEventListener('click', async () => {
-        const text = textInput.value.trim();
+        let text = textInput.value.trim();
         if (!text) {
             alert("Пожалуйста, введите текст или перетащите файл.");
             return;
         }
+
+        // ЛИМИТ НА СИМВОЛЫ: Если текст длиннее 5000 символов (например, дипломная работа)
+        const MAX_CHARS = 5000;
+        if (isOnlineMode && text.length > MAX_CHARS) {
+            alert(`⚠️ Текст слишком длинный (${text.length} симв.). Для стабильной работы онлайн-ИИ текст автоматически сокращен до первых ${MAX_CHARS} символов.`);
+            text = text.substring(0, MAX_CHARS);
+            textInput.value = text; // Обновляем поле визуально, чтобы пользователь видел срез
+        }
+
 
         // Скрываем прошлые результаты и заглушку, показываем спиннер
         const placeholder = document.getElementById('resultsPlaceholder');
