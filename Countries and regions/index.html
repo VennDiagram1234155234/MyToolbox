@@ -23,81 +23,100 @@
           <g id="regionsLayer" class="regions-layer"></g>
           <g id="boundariesLayer"></g>
           <!-- Dev tool -------------------------------------------------------------------------------------------->
-          <!--<g id="vertexLabelsLayer"></g>-->
+          <g id="vertexLabelsLayer"></g>
           <!--End of Dev tool -------------------------------------------------------------------------------------->
         </svg>
         <div id="reinforcementToken" class="reinforcement-token">+0</div>
       </div>
     </div>
-    <div class="panel">
-      <h1>Countries and regions</h1>
-      <p class="muted">by @vennerkurh 2026</p>
+      <div class="panel">
+        <h1 style="padding-left: 10px; margin-top: 15px;">Countries and regions</h1>
+        <p class="muted" style="padding-left: 10px; margin-bottom: 10px;">by @vennerkurh 2026</p>
 
-      <div class="status">
-        <p><strong>Current move:</strong> <span id="turnText"></span></p>
-        <p><strong>Mode:</strong> <span id="modeText"></span></p>
-        <p><strong>Status:</strong> <span id="warText"></span></p>
-      </div>
+        <!-- Основной статус игры -->
+        <div class="status" style="padding: 5px 10px; box-sizing: border-box;">
+            <p style="margin: 6px 0;"><strong>Current move:</strong> <span id="turnText"></span></p>
+            <p style="margin: 6px 0;"><strong>Mode:</strong> <span id="modeText"></span></p>
+            <p style="margin: 6px 0;"><strong>Status:</strong> <span id="warText"></span></p>
+        </div>
 
-      <div class="controls">
-        <button id="moveModeBtn" class="btn-secondary">Movement mode</button>
-        <button id="attackModeBtn" class="btn-danger">Attack mode</button>
-        <button id="truceBtn" class="btn-success">Declare a truce</button>
-        <button id="warBtn" class="btn-danger">Declare war</button>
-      </div>
 
-      <div class="controls">
-        <button id="formAllianceBtn" class="btn-secondary">Form alliance</button>
-        <button id="breakAllianceBtn" class="btn-secondary">Break alliance</button>
-      </div>
-
-      <div class="controls">
-        <button id="factoriesToggleBtn" class="btn-secondary">Factories: off</button>
-        <button id="buildFactoryBtn" class="btn-secondary" disabled>Build factories</button>
-        <button id="demolishFactoryBtn" class="btn-secondary" disabled style="grid-column: 1 / -1;">
-          Demolish factories
-        </button>
-      </div>
-
-      <button id="endTurnBtn" class="btn-primary">Proceed</button>
-      <button id="restartBtn" class="btn-secondary">Restart game</button>
-      
-      <!--<div style="display: flex; align-items: center; gap: 10px; background: #f3f4f6; padding: 8px 12px; border-radius: 8px; border: 1px solid #e5e7eb;">
-            <label style="display: flex; align-items: center; gap: 5px; font-weight: 600; font-size: 14px; cursor: pointer; color: #374151;">
-            <input type="checkbox" id="aiToggle" checked style="width: 16px; height: 16px; accent-color: #2563eb;">
-            Play with AI
-            </label>
+        <!-- Сетка для разделения кнопок и статистики по горизонтали -->
+                    <!-- Сетка для разделения кнопок и статистики по горизонтали -->
+        <div style="display: flex; gap: 15px; align-items: flex-start; width: 100%; box-sizing: border-box; padding: 5px 10px;">
             
-            <select id="aiDifficulty" style="padding: 4px 8px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 14px; background: white; cursor: pointer;">
-                  <option value="easy">Easy</option>
-                  <option value="medium" selected>Medium</option>
-                  <option value="hard">Hard</option>
-            </select>
+            <!-- КОЛОНКА 1: Кнопки управления (с добавленными внутренними отступами) -->
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 12px; padding-right: 5px;">
+                <div class="controls">
+                    <button id="endTurnBtn" class="btn-primary" style="margin-top: 5px;">Proceed</button>
+                    <button id="moveModeBtn" class="btn-secondary">Movement</button>
+                    <button id="attackModeBtn" class="btn-danger">Attack</button>
+                    
+                    <button id="buildFactoryBtn" class="btn-secondary" disabled>Build factories</button>
+                    <button id="demolishFactoryBtn" class="btn-secondary" disabled>Demolish factories</button>
+                    
+                    <button id="artilleryAttackModeBtn" class="btn-danger" style="grid-column: 1 / -1;">Artillery Strike Mode</button>
+                    <button id="buildArtilleryBtn" class="btn-secondary" disabled>Build Artillery</button>
+                    <button id="scrapArtilleryBtn" class="btn-secondary" disabled>Delete Artillery</button>
+                    
+                    <button id="truceBtn" class="btn-success">Peace</button>
+                    <button id="warBtn" class="btn-danger">Declare war</button>
+                    <button id="formAllianceBtn" class="btn-secondary">Form alliance</button>
+                    <button id="breakAllianceBtn" class="btn-secondary">Break alliance</button>
 
-            <div id="playerSelectContainer" style="display: flex; align-items: center; gap: 5px;">
-            <label for="playerCountrySelect" style="color: #374151; font-weight: bold; font-size: 14px;">Choose your country:</label>
-            <select id="playerCountrySelect" style="padding: 4px 8px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 14px; background: white; cursor: pointer;">
-            </select>
+                </div>
+                <button id="factoriesToggleBtn" class="btn-secondary" style="grid-column: 1 / -1;">Factories: off</button>   
+                <button id="restartBtn" class="btn-secondary">Restart game</button>
             </div>
-      </div>-->
 
-      <div class="status">
-        <p><strong>Maps</strong></p>
-        <div class="controls">
-          <select id="mapSelect" style="padding:10px;border-radius:8px;border:1px solid #d1d5db;">
-            <option value="default">2 countries</option>
-            <option value="zombie_map">zombie apocalypse (7 countries v2)</option>
-          </select>
-          <button id="loadMapBtn" class="btn-secondary">Load map</button>
+                        <!-- КОЛОНКА СТАТИСТИКИ (Справа от кнопок) -->
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                
+                <!-- Окно потерь -->
+                <div class="status" style="width: 280px; min-width: 260px; border-left: 3px solid #ef4444; margin: 0; background: #1e293b; border-radius: 8px; padding: 15px; box-sizing: border-box; box-shadow: inset 0 0 10px rgba(0,0,0,0.2);">
+                    <details id="statsDetails" open>
+                        <summary style="cursor: pointer; font-weight: bold; color: #ef4444; user-select: none; padding-bottom: 5px;">Total Casualties</summary>
+                        <div id="casualtyStatsContainer" style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px; max-height: 340px; overflow-y: auto; padding-right: 8px;">
+                            <!-- Сюда JavaScript рендерит данные -->
+                        </div>
+                    </details>
+                </div>
+
+                <!-- Ползунок зомби теперь привязан к этой же колонке и встанет строго под ней -->
+                <div id="zombieSliderContainer" class="status" style="display: none; width: 280px; min-width: 260px; background: #1e293b; border-radius: 8px; padding: 15px; box-sizing: border-box; border-left: 3px solid #f43f5e; box-shadow: inset 0 0 10px rgba(0,0,0,0.2);">
+                    <p style="margin: 0 0 8px 0; color: #f43f5e; font-weight: bold;">🧟 Initial Zombies Count</p>
+                    <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
+                        <input id="zombieCountRange" type="range" min="100" max="20000" step="100" value="1000" style="flex-grow: 1; accent-color: #f43f5e; cursor: pointer;" />
+                        <span id="zombieCountText" style="font-weight: bold; min-width: 55px; text-align: right; color: #fff;">1000</span>
+                    </div>
+                </div>
+
+            </div>
+
+
         </div>
-        <div class="zoom-row">
-          <label for="zoomRange"><strong>Scale:</strong></label>
-          <input id="zoomRange" type="range" min="70" max="170" step="5" value="100" />
-          <span id="zoomText">100%</span>
+
+        <!-- Выбор карт и системный лог -->
+        <div class="status" style="margin-top: 15px;">
+            <p><strong>Maps</strong></p>
+            <div class="controls">
+                <select id="mapSelect" style="padding:10px;border-radius:8px;border:1px solid #d1d5db;">
+                    <option value="default">2 countries</option>
+                    <option value="zombie_map">zombie apocalypse (7 countries v2)</option>
+                    <option value="random_unions">random (with unions)</option>
+                    <option value="random_no_unions">random (no unions)</option>
+                </select>
+                <button id="loadMapBtn" class="btn-secondary">Load map</button>
+            </div>
+            <div class="zoom-row">
+                <label for="zoomRange"><strong>Scale:</strong></label>
+                <input id="zoomRange" type="range" min="70" max="170" step="5" value="100" />
+                <span id="zoomText">100%</span>
+            </div>
         </div>
-      </div>
-      <div class="log" id="log"></div>
+        <div class="log" id="log"></div>
     </div>
+
   </div>
   <div id="passOverlay" class="pass-overlay" role="dialog" aria-modal="true">
     <div class="pass-card">

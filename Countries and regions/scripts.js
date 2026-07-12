@@ -15,6 +15,7 @@ const COUNTRY_LIBRARY = {
     pink: { id: "pink", name: "Pink country", color: "#ec4899" },
     teal: { id: "teal", name: "Teal country", color: "#14b8a6" }
 };
+
 const MAP_OUTLINE = [
     [20, 20], [520, 20], [520, 640], [20, 640]
 ];
@@ -278,7 +279,7 @@ const GAME_MAPS = {
         human_reg12: ["H12_1", "H12_2", "H12_3", "H12_4"]
     }
     },
-sketch6: {
+    sketch6: {
     id: "sketch6",
     name: "6 countries",
     countryOrder: ["green","blue","purple","black","darkgray","orange","yellow"],
@@ -337,68 +338,90 @@ sketch6: {
     outline: [[270, 20], [360, 30], [440, 60], [490, 110], [510, 170], [520, 240], [500, 320], [470, 400], [490, 450], [470, 520], [420, 580], [350, 620], [270, 640], [190, 630], [130, 590], [70, 550], [40, 490], [30, 420], [40, 350], [30, 280], [40, 210], [60, 140], [100, 80], [180, 40]],
     // Ставимо мінімальну площу, щоб прибрати аварійні кола на межах
     minCellArea: 10
-  },
+    },
 
     moldova: {
-    id: "moldova",
-    name: "moldova (7 regions)",
-    countryOrder: ["orange","blue","green","purple","red","yellow","cyan"],
-    regionData: [
-        { id: "md_north1", owner: "blue", army: 18, x: 230, y: 90, capital: true },
-        { id: "md_north2", owner: "blue", army: 18, x: 430, y: 180, capital: false },
-        { id: "md_north3", owner: "blue", army: 18, x: 430, y: 180, capital: false },
-        { id: "md_center1", owner: "green", army: 20, x: 175, y: 190, capital: true },
-        { id: "md_center2", owner: "green", army: 20, x: 175, y: 190, capital: false },
-        { id: "md_center3", owner: "green", army: 20, x: 175, y: 190, capital: false },
-        /*{ id: "md_chisinau", owner: "orange", army: 30, x: 275, y: 240, capital: true },
-        { id: "md_transnistria_n", owner: "yellow", army: 25, x: 330, y: 140, capital: false },
-        { id: "md_transnistria_s", owner: "cyan", army: 12, x: 360, y: 260, capital: false },
-        { id: "md_gagauzia", owner: "purple", army: 22, x: 340, y: 340, capital: false },
-        { id: "md_south", owner: "red", army: 15, x: 265, y: 460, capital: false }*/
-    ],
-    regionVertices: {
-        O1: [166,65], O2: [252, 68], O3: [300, 100], O4: [268,122], O5: [210,122],
-        O6: [275,178], O7: [345, 153], O8: [220,172], O9: [295,208], 
-        O10: [255,265], O11: [235,245], O12: [265,265], O13: [350, 233],
-        O14: [324, 256], O15: [235, 280], O16: [300, 320], O17: [345, 320],
-        /*O12: [198,390],
-        O13: [220,416], O14: [248,438], O15: [282,456], O16: [320,454], O17: [355,444], O18: [381,426],
-        O19: [398,404], O20: [406,376], O21: [408,342], O22: [401,300], O23: [389,266], O24: [375,232],
-        O25: [358,198], O26: [340,168], O27: [327,148], O28: [316,128], O29: [316,108], O30: [342,92],
-        O31: [356,74], O32: [348,56], O33: [330,46], O34: [310,40],
-        I1: [280,120], I2: [250,190], I3: [320,170], I4: [355,230], I5: [340,300], I6: [305,360], I7: [230,300], I8: [285,235]*/
+        id: "moldova",
+        name: "Republic of Moldova (12 regions)",
+        countryOrder: ["blue", "green", "orange", "red"],
+        regionData: [
+            { id: "md_briceni", owner: "blue", army: 30, x: 140, y: 70, capital: false },
+            { id: "md_balti", owner: "blue", army: 45, x: 210, y: 130, capital: true },
+            { id: "md_soroca", owner: "blue", army: 25, x: 280, y: 90, capital: false },
+
+            { id: "md_ungheni", owner: "green", army: 25, x: 160, y: 200, capital: false },
+            { id: "md_orhei", owner: "green", army: 35, x: 290, y: 190, capital: true },
+            { id: "md_dubasari", owner: "green", army: 20, x: 340, y: 160, capital: false },
+
+            { id: "md_hincesti", owner: "orange", army: 25, x: 210, y: 280, capital: false },
+            { id: "md_chisinau", owner: "orange", army: 50, x: 280, y: 260, capital: true },
+            { id: "md_tiraspol", owner: "orange", army: 40, x: 360, y: 270, capital: false },
+
+            { id: "md_cahul", owner: "red", army: 30, x: 180, y: 460, capital: false },
+            { id: "md_gagauzia", owner: "red", army: 35, x: 240, y: 390, capital: true },
+            { id: "md_stefan_voda", owner: "red", army: 25, x: 330, y: 370, capital: false }
+        ],
+        regionVertices: {
+            V1: [80, 60],
+            V2: [200, 90],
+            V3: [240, 115],
+            V4: [260, 120],
+            V5: [330, 190],
+            V6: [350, 266],
+            V7: [340, 340],
+            V8: [260, 420],
+            V9: [300, 480],
+            V10: [100, 480],
+            V11: [155, 460],
+            V12: [150, 350],
+            V13: [150, 240],
+            V14: [130, 140],
+            V15: [220, 130],
+            V16: [270, 230],
+            V17: [210, 250],
+            V18: [275, 260],
+            V19: [200, 360],
+            V20: [280, 350],
+            V21: [200, 400],
+            V22: [340, 480],
+            V23: [80, 460],
+        },
+            regionShapes: {
+            md_briceni: ["V1", "V2", "V15", "V14"],
+            md_balti: ["V15", "V3", "V16", "V17"],
+            md_soroca: ["V3", "V4", "V5", "V16"],
+            
+            md_ungheni: ["V14", "V15", "V17", "V13"],
+            md_orhei: ["V16", "V5", "V6", "V18"],
+            md_dubasari: ["V6", "V7", "V18"],
+            
+            md_hincesti: ["V13", "V17", "V19", "V12"],
+            md_chisinau: ["V17", "V16", "V18", "V20", "V19"],
+            md_tiraspol: ["V18", "V7", "V20"],
+            
+            md_cahul: ["V12", "V19", "V21", "V11", "V10", "V23"],
+            md_gagauzia: ["V19", "V20", "V8", "V21"],
+            md_stefan_voda: ["V20", "V8", "V9", "V22", "V7"]
+        },
+        neighbors: {
+            md_briceni: ["md_balti", "md_ungheni"],
+            md_balti: ["md_briceni", "md_soroca", "md_ungheni", "md_chisinau"],
+            md_soroca: ["md_balti", "md_orhei"],
+            md_ungheni: ["md_briceni", "md_balti", "md_hincesti", "md_chisinau"],
+            md_orhei: ["md_soroca", "md_balti", "md_dubasari", "md_chisinau"],
+            md_dubasari: ["md_orhei", "md_chisinau", "md_tiraspol"],
+            md_hincesti: ["md_ungheni", "md_chisinau", "md_cahul", "md_gagauzia"],
+            md_chisinau: ["md_balti", "md_ungheni", "md_orhei", "md_dubasari", "md_hincesti", "md_tiraspol", "md_gagauzia"],
+            md_tiraspol: ["md_dubasari", "md_chisinau", "md_stefan_voda", "md_gagauzia"],
+            md_cahul: ["md_hincesti", "md_gagauzia"],
+            md_gagauzia: ["md_hincesti", "md_chisinau", "md_tiraspol", "md_cahul", "md_stefan_voda"],
+            md_stefan_voda: ["md_tiraspol", "md_gagauzia"]
+        },
+        minCellArea: 80
     },
-    regionShapes: {
-        md_north1: ["O1","O2","O3", "O4","O5"],
-        md_north2: ["O3","O4","O6", "O7"],
-        md_north3: ["O5","O4","O6", "O8"],
-        md_center1: ["O8","O6","O9", "O12", "O10", "O11"],
-        md_center2: ["O9","O6","O7", "O13", "O14"],
-        md_center3: ["O11","O10","O12", "O9", "O14", "O17", "O16", "O15"],
-        //,"O4","O5","O6"]//,"O7","O8","O9","O10","I7","I2","I1"],
-        /*md_balti: ["O10","O11","O12","O13","O14","O15","I6","I7","I2"],
-        md_south: ["O15","O16","O17","O18","O19","O20","O21","O22","I5","I6"],
-        md_gagauzia: ["O22","O23","O24","O25","O26","I5","I6"],
-        md_transnistria_s: ["I5","O25","O26","O27","O28","I3"],
-        md_transnistria_n: ["I3","O28","O29","O30","O31","O32","O33","O34","I1"],
-        md_chisinau: ["I1","I2","I8","I4","I5","I6","I7"]*/
-    },
-    neighbors: {
-        md_north1: ["md_north2", "md_north3"],
-        md_north2: ["md_north1", "md_north3"],
-        md_north3: ["md_north1", "md_north2"],
-        md_center1: ["md_north3"],
-        md_center2: ["md_north2", "md_center1"],
-        md_center3: ["md_center1", "md_center2"]
-        /*md_balti: ["md_north1", "md_chisinau", "md_south"],
-        md_south: ["md_balti", "md_chisinau", "md_gagauzia", "md_transnistria_s"],
-        md_gagauzia: ["md_south", "md_chisinau", "md_transnistria_s"],
-        md_transnistria_s: ["md_south", "md_gagauzia", "md_chisinau", "md_transnistria_n"],
-        md_transnistria_n: ["md_north1", "md_chisinau", "md_transnistria_s"],
-        md_chisinau: ["md_north1", "md_balti", "md_south", "md_gagauzia", "md_transnistria_n", "md_transnistria_s"]*/
-    },
-    minCellArea: 80
-    },
+
+
+
     sketch7: {
     id: "sketch7",
     name: "7 countries",
@@ -678,7 +701,7 @@ const SKETCH7_V2_FROM_IMAGE = {
             {"id": "v2_10", "owner": "black", "army": 10, "x": 196, "y": 186, "capital": false}, 
             {"id": "v2_11", "owner": "red", "army": 70, "x": 103, "y": 206, "capital": false}, 
             {"id": "v2_12", "owner": "black", "army": 70, "x": 395, "y": 209, "capital": false}, 
-            {"id": "v2_13", "owner": "black", "army": 40, "x": 294, "y": 218, "capital": false}, 
+            {"id": "v2_13", "owner": "black", "army": 40, "x": 294, "y": 218, "capital": true}, 
             {"id": "v2_14", "owner": "green", "army": 20, "x": 387, "y": 253, "capital": true},
             {"id": "v2_15", "owner": "black", "army": 50, "x": 185, "y": 267, "capital": false}, 
             {"id": "v2_16", "owner": "black", "army": 60, "x": 247, "y": 268, "capital": false}, 
@@ -687,7 +710,7 @@ const SKETCH7_V2_FROM_IMAGE = {
             {"id": "v2_19", "owner": "green", "army": 10, "x": 433, "y": 290, "capital": false}, 
             {"id": "v2_20", "owner": "red", "army": 30, "x": 66, "y": 302, "capital": true}, 
             {"id": "v2_21", "owner": "red", "army": 20, "x": 148, "y": 328, "capital": false}, 
-            {"id": "v2_22", "owner": "black", "army": 60, "x": 232, "y": 329, "capital": true},
+            {"id": "v2_22", "owner": "black", "army": 60, "x": 232, "y": 329, "capital": false},
             {"id": "v2_23", "owner": "black", "army": 50, "x": 346, "y": 332, "capital": false}, 
             {"id": "v2_24", "owner": "blue", "army": 40, "x": 435, "y": 336, "capital": false}, 
             {"id": "v2_25", "owner": "black", "army": 40, "x": 294, "y": 342, "capital": false}, 
@@ -1121,6 +1144,13 @@ for (const mapDef of Object.values(GAME_MAPS)) {
 }
 
 let activeMapId = "default";
+let currentZombieBaseMapKey = null;
+let globalCasualties = {}; 
+// Структура будет хранить данные в формате: 
+// countryId: { name: "Name", color: "#hex", troops: 0, factories: 0 }
+
+
+
 let regions = structuredClone(GAME_MAPS[activeMapId].regionData);
 let activeCountries = structuredClone(GAME_MAPS[activeMapId].countries);
 let turnOrder = [...GAME_MAPS[activeMapId].countryOrder];
@@ -1137,6 +1167,7 @@ let blockedMoveSources = new Set();
 let pendingDiplomacyAction = null; // "form" | "break"
 let pendingFactoryAction = null; // "build" | "demolish"
 let factoriesEnabled = false;
+let pendingArtilleryAction = null; // "build" | "scrap"
 
 const mapEl = document.getElementById("map");
 const mapBgEl = document.getElementById("mapBg");
@@ -1167,6 +1198,38 @@ const unitsBackBtnEl = document.getElementById("unitsBackBtn");
 const unitsClearBtnEl = document.getElementById("unitsClearBtn");
 const unitsCancelBtnEl = document.getElementById("unitsCancelBtn");
 const unitsOkBtnEl = document.getElementById("unitsOkBtn");
+const artilleryAttackModeBtn = document.getElementById("artilleryAttackModeBtn");
+const buildArtilleryBtn = document.getElementById("buildArtilleryBtn");
+const scrapArtilleryBtn = document.getElementById("scrapArtilleryBtn");
+// Финальная рабочая логика ползунка
+const zombieSliderContainer = document.getElementById("zombieSliderContainer");
+const zombieCountRange = document.getElementById("zombieCountRange");
+const zombieCountText = document.getElementById("zombieCountText");
+
+if (zombieCountRange && zombieCountText) {
+    // 1. При перетаскивании просто меняем цифру на экране (100...20000)
+    zombieCountRange.addEventListener("input", (e) => {
+        zombieCountText.textContent = e.target.value;
+    });
+
+    // 2. В момент, когда игрок ОТПУСТИЛ ползунок — мгновенно перерисовываем карту с новым числом войск!
+    zombieCountRange.addEventListener("change", () => {
+        if (activeMapId === "zombie_map") {
+            addLog(`🧟 Задан новый размер орды: ${zombieCountRange.value}. Перезапуск сценария...`);
+            loadMap("zombie_map");
+        }
+    });
+}
+
+// Переключение видимости отдельного контейнера ползунка при смене карт
+if (mapSelectEl) {
+    mapSelectEl.addEventListener("change", (e) => {
+        if (zombieSliderContainer) {
+            zombieSliderContainer.style.display = e.target.value === "zombie_map" ? "block" : "none";
+        }
+    });
+}
+
 let pendingReinforcement = null;
 let reinforcementDrag = false;
 let mapScale = 1;
@@ -1202,7 +1265,7 @@ function showUnitsPrompt(question, maxValue) {
     }
 
     function appendDigit(d) {
-        if (currentValue.length < 4) currentValue += d;
+        if (currentValue.length < 6) currentValue += d;
         const numeric = Number(currentValue || "0");
         if (numeric > maxValue) currentValue = String(maxValue);
         refresh();
@@ -1342,6 +1405,11 @@ function breakAlliance(countryA, countryB) {
 }
 
 function switchPlayer() {
+    // АВТО-СБРОС: При передаче хода принудительно выключаем бесконечный снос/стройку фабрик
+    pendingFactoryAction = null;
+    pendingArtilleryAction = null;
+    selectedRegionId = null;
+
     const alive = getAlivePlayers();
     if (!alive.size) return;
     for (let step = 1; step <= turnOrder.length; step += 1) {
@@ -1451,7 +1519,69 @@ function renderStatus() {
     turnText.textContent = getCountry(currentPlayer).name;
     modeText.textContent = mode === "move" ? "Movement" : "Attack";
     warText.textContent = atWar ? "War" : "Peace";
+
+    // Финальная и полная логика разблокировки абсолютно всех кнопок панели
+    if (selectedRegionId) {
+        const clicked = getRegion(selectedRegionId);
+        const completedTurns = turnsCompletedByCountry.get(currentPlayer) || 0;
+
+        if (currentPlayer === "zombie") {
+            // ЗОМБИ: Строить фабрики и артиллерию нельзя вообще по правилам игры
+            if (buildFactoryBtn) buildFactoryBtn.disabled = true;
+            if (buildArtilleryBtn) buildArtilleryBtn.disabled = true;
+            if (scrapArtilleryBtn) scrapArtilleryBtn.disabled = true;
+
+            // ИСПРАВЛЕНО: Кнопка сноса для зомби ВСЕГДА активна, если выбран регион!
+            // Это позволит кликнуть по ней повторно и выйти из режима сноса, даже если фабрик уже нет.
+            if (demolishFactoryBtn) demolishFactoryBtn.disabled = false;
+            
+        } else {
+            // ЛЮДИ: Проверка главного тумблера режима фабрик (FACTORIES: ON/OFF)
+            if (!factoriesEnabled) {
+                if (buildFactoryBtn) buildFactoryBtn.disabled = true;
+                if (demolishFactoryBtn) demolishFactoryBtn.disabled = true;
+                if (buildArtilleryBtn) buildArtilleryBtn.disabled = false;
+                if (scrapArtilleryBtn) scrapArtilleryBtn.disabled = false;
+            } else {
+                // Если режим фабрик ВКЛЮЧЕН (FACTORIES: ON):
+                
+                // ИСПРАВЛЕНО: Кнопки фабрик Людей ВСЕГДА активны для клика, пока выбран регион!
+                if (buildFactoryBtn) buildFactoryBtn.disabled = false;
+                if (demolishFactoryBtn) demolishFactoryBtn.disabled = false;
+
+                // ИСПРАВЛЕНО: Кнопки артиллерии Людей ВСЕГДА активны для клика, пока выбран регион!
+                if (buildArtilleryBtn) buildArtilleryBtn.disabled = false;
+                if (scrapArtilleryBtn) scrapArtilleryBtn.disabled = false;
+
+            }
+        }
+    } else {
+        // Если никакой регион на карте не выбран — абсолютно вся панель действий уходит в блок
+        if (buildFactoryBtn) buildFactoryBtn.disabled = true;
+        if (demolishFactoryBtn) demolishFactoryBtn.disabled = true;
+        if (buildArtilleryBtn) buildArtilleryBtn.disabled = true;
+        if (scrapArtilleryBtn) scrapArtilleryBtn.disabled = true;
+    }
+
+    // Динамическая генерация списков потерь по фракциям (ваш оригинальный рабочий код логов)
+    const container = document.getElementById("casualtyStatsContainer");
+    if (container) {
+        container.innerHTML = ""; 
+        Object.keys(globalCasualties).forEach(countryId => {
+            const data = globalCasualties[countryId];
+            const countryRow = document.createElement("div");
+            countryRow.style.padding = "4px 0";
+            countryRow.style.borderBottom = "1px solid #374151";
+            countryRow.innerHTML = `
+                <span style="color: ${data.color}; font-weight: bold;">■ ${data.name}:</span> 
+                <span>💀 ${data.troops} troops</span> | 
+                <span>⚙ ${data.factories} fac. destroyed</span>
+            `;
+            container.appendChild(countryRow);
+        });
+    }
 }
+
 
 function clearFactoriesOnCurrentMap() {
     for (const region of regions) region.factories = 0;
@@ -1503,67 +1633,75 @@ function populateRandomFactoriesOnCurrentMap() {
 }
 
 function loadMap(mapId) {
+    // Блокировка и считывание ползунка для зомби-режима
     if (mapId === "zombie_map") {
-    // 1. Получаем список всех карт
-    const allMapKeys = Object.keys(GAME_MAPS);
-    
-    // Фильтруем список: убираем саму зомби-карту и обе случайные карты (random)
-    const validBases = allMapKeys.filter(key => 
-        key !== "zombie_map" && 
-        key !== "random_unions" && 
-        key !== "random_no_unions" && 
-        GAME_MAPS[key]
-    );
-    
-    // Выбираем одну случайную карту из оставшихся (например, sketch6 или 7 countries v2)
-    const chosenBaseKey = validBases.length > 0 
-        ? validBases[Math.floor(Math.random() * validBases.length)] 
-        : "default";
+        if (zombieSliderContainer && zombieCountRange) {
+            zombieSliderContainer.style.display = "block";
+            zombieCountRange.disabled = false;
+        }
+
+        const allMapKeys = Object.keys(GAME_MAPS);
+        const validBases = allMapKeys.filter(key => 
+            key !== "zombie_map" && 
+            key !== "random_unions" && 
+            key !== "random_no_unions" && 
+            GAME_MAPS[key]
+        );
         
-    const baseMap = GAME_MAPS[chosenBaseKey];
-    
-    // 2. Создаем чистую копию выбранной карты
-    const zombieCopy = {
-        id: "zombie_map",
-        name: `zombie apocalypse (${baseMap.name || chosenBaseKey})`,
-        countryOrder: [],
-        alliances: {},
-        regionData: baseMap.regionData ? baseMap.regionData.map(r => ({ ...r })) : [],
-        neighbors: { ...baseMap.neighbors },
-        regionVertices: { ...baseMap.regionVertices },
-        regionShapes: { ...baseMap.regionShapes }
-    };
-    if (baseMap.outline) zombieCopy.outline = [...baseMap.outline];
-    if (baseMap.minCellArea) zombieCopy.minCellArea = baseMap.minCellArea;
+        // Если базовая карта еще не выбрана для этой сессии — выбираем её случайно
+        if (!currentZombieBaseMapKey || !validBases.includes(currentZombieBaseMapKey)) {
+            currentZombieBaseMapKey = validBases.length > 0 
+                ? validBases[Math.floor(Math.random() * validBases.length)] 
+                : "default";
+        }
+        
+        // Используем жестко зафиксированную карту-основу
+        const baseMap = GAME_MAPS[currentZombieBaseMapKey];
 
-    // 3. Собираем выжившие страны в альянс "Humans"
-    const humanCountries = baseMap.countryOrder.filter(c => c !== "zombie");
-    
-    zombieCopy.countryOrder = ["zombie", ...humanCountries];
-    zombieCopy.alliances = {
-        "Humans": [...humanCountries]
-    };
+        
+        // Безопасное клонирование базовой карты
+        const zombieCopy = {
+            id: "zombie_map",
+            name: `zombie apocalypse (${baseMap.name || chosenBaseKey})`,
+            countryOrder: [],
+            alliances: {},
+            regionData: baseMap.regionData ? baseMap.regionData.map(r => ({ ...r })) : [],
+            neighbors: baseMap.neighbors ? structuredClone(baseMap.neighbors) : {},
+            regionVertices: baseMap.regionVertices ? structuredClone(baseMap.regionVertices) : {},
+            regionShapes: baseMap.regionShapes ? structuredClone(baseMap.regionShapes) : {}
+        };
+        
+        if (baseMap.outline) zombieCopy.outline = [...baseMap.outline];
+        if (baseMap.minCellArea) zombieCopy.minCellArea = baseMap.minCellArea;
 
-    // 4. Заражаем один случайный регион на выбранной карте
-    if (zombieCopy.regionData && zombieCopy.regionData.length > 0) {
-        const randomIndex = Math.floor(Math.random() * zombieCopy.regionData.length);
-        const targetRegion = zombieCopy.regionData[randomIndex];
+        const humanCountries = baseMap.countryOrder.filter(c => c !== "zombie");
+        zombieCopy.countryOrder = ["zombie", ...humanCountries];
+        zombieCopy.alliances = { "Humans": [...humanCountries] };
 
-        targetRegion.owner = "zombie";
-        // Число зомби от 500 до 1000
-        targetRegion.army = Math.floor(Math.random() * 501) + 1500;
-        targetRegion.capital = true; 
+        // Внедрение стартового количества зомби из ползунка
+        if (zombieCopy.regionData && zombieCopy.regionData.length > 0) {
+            const randomIndex = Math.floor(Math.random() * zombieCopy.regionData.length);
+            const targetRegion = zombieCopy.regionData[randomIndex];
+            targetRegion.owner = "zombie";
+            
+            // Если ползунок существует, берем его значение, иначе дефолтные 1000
+            const sliderEl = document.getElementById("zombieCountRange");
+            targetRegion.army = sliderEl ? parseInt(sliderEl.value, 10) : 1000;
+            targetRegion.capital = true; 
+        }
+
+        GAME_MAPS.zombie_map = zombieCopy;
+    } else {
+        // Если выбрана любая другая карта — скрываем ползунок через глобальную переменную
+        const sliderCont = document.getElementById("zombieSliderContainer");
+        if (sliderCont) {
+            sliderCont.style.display = "none";
+        }
     }
 
-    GAME_MAPS.zombie_map = zombieCopy;
-    }
-    if (mapId === "random_unions") {
-    GAME_MAPS.random_unions = generateRandomMapDefinition("random_unions", "random (with unions)", true);
-    }
-    if (mapId === "random_no_unions") {
-    GAME_MAPS.random_no_unions = generateRandomMapDefinition("random_no_unions", "random (no unions)", false);
-    }
+
     const mapDef = GAME_MAPS[mapId];
+
     if (!mapDef) return;
     if (!mapDef.countries) {
     mapDef.countries = Object.fromEntries(mapDef.countryOrder.map((countryId) => [countryId, COUNTRY_LIBRARY[countryId]]));
@@ -1586,7 +1724,10 @@ function loadMap(mapId) {
     regionVertices = structuredClone(mapDef.regionVertices);
     regionShapes = structuredClone(mapDef.regionShapes);
     regions = structuredClone(mapDef.regionData);
-    for (const region of regions) region.factories = region.factories || 0;
+    for (const region of regions) {
+        region.factories = region.factories || 0;
+        region.artillery = region.artillery || 0;
+    }
     if (factoriesEnabled) populateRandomFactoriesOnCurrentMap();
     else clearFactoriesOnCurrentMap();
 
@@ -1600,6 +1741,27 @@ function loadMap(mapId) {
     selectedRegionId = null;
     winner = null;
     isPassPhase = false;
+    
+        // Создаем персональные счетчики под каждую страну на этой карте
+    globalCasualties = {};
+    if (mapDef && mapDef.countryOrder) {
+        mapDef.countryOrder.forEach(countryId => {
+            const countryInfo = COUNTRY_LIBRARY[countryId] || { name: countryId, color: "#ffffff" };
+            globalCasualties[countryId] = {
+                name: countryInfo.name,
+                color: countryInfo.color,
+                troops: 0,
+                factories: 0
+            };
+        });
+    }
+
+    
+    if (buildArtilleryBtn && scrapArtilleryBtn) {
+        buildArtilleryBtn.disabled = true;
+        scrapArtilleryBtn.disabled = true;
+    }
+
     playersWhoFinishedAtLeastOneTurn.clear();
     turnsCompletedByCountry.clear();
     blockedMoveSources = new Set();
@@ -1660,13 +1822,16 @@ function loadMap(mapId) {
 
 function renderMap() {
     for (const old of mapEl.querySelectorAll(".region-btn")) {
-    old.remove();
+        old.remove();
     }
     for (const old of mapEl.querySelectorAll(".capital-star")) {
-    old.remove();
+        old.remove();
     }
     for (const old of mapEl.querySelectorAll(".factory-icon")) {
-    old.remove();
+        old.remove();
+    }
+    for (const old of mapEl.querySelectorAll(".artillery-icon")) {
+        old.remove();
     }
 
     regionsLayerEl.innerHTML = "";
@@ -1675,45 +1840,45 @@ function renderMap() {
     const regionById = new Map(regions.map((r) => [r.id, r]));
 
     for (const region of regions) {
-    const vertices = regionShapes[region.id];
-    if (!vertices || vertices.length < 3) continue;
-    const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-    polygon.setAttribute("points", verticesToPoints(vertices));
-    polygon.setAttribute("class", `region-shape${selectedRegionId === region.id ? " selected" : ""}`);
-    const regionColor = getCountry(region.owner).color;
-    polygon.style.fill = withAlpha(regionColor, selectedRegionId === region.id ? 0.7 : 0.6);
-    polygon.style.stroke = withAlpha(regionColor, selectedRegionId === region.id ? 0.6 : 0.45);
-    polygon.setAttribute("data-region-id", region.id);
-    polygon.addEventListener("click", () => onRegionClick(region.id));
-    regionsLayerEl.appendChild(polygon);
+        const vertices = regionShapes[region.id];
+        if (!vertices || vertices.length < 3) continue;
+        const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+        polygon.setAttribute("points", verticesToPoints(vertices));
+        polygon.setAttribute("class", `region-shape${selectedRegionId === region.id ? " selected" : ""}`);
+        const regionColor = getCountry(region.owner).color;
+        polygon.style.fill = withAlpha(regionColor, selectedRegionId === region.id ? 0.7 : 0.6);
+        polygon.style.stroke = withAlpha(regionColor, selectedRegionId === region.id ? 0.6 : 0.45);
+        polygon.setAttribute("data-region-id", region.id);
+        polygon.addEventListener("click", () => onRegionClick(region.id));
+        regionsLayerEl.appendChild(polygon);
 
-    for (let i = 0; i < vertices.length; i += 1) {
-        const a = vertices[i];
-        const b = vertices[(i + 1) % vertices.length];
-        const key = edgeKey(a, b);
-        if (!edgeUsage.has(key)) {
-        edgeUsage.set(key, { a, b, regionIds: new Set() });
+        for (let i = 0; i < vertices.length; i += 1) {
+            const a = vertices[i];
+            const b = vertices[(i + 1) % vertices.length];
+            const key = edgeKey(a, b);
+            if (!edgeUsage.has(key)) {
+                edgeUsage.set(key, { a, b, regionIds: new Set() });
+            }
+            edgeUsage.get(key).regionIds.add(region.id);
         }
-        edgeUsage.get(key).regionIds.add(region.id);
-    }
     }
 
     for (const entry of edgeUsage.values()) {
-    const owners = [...entry.regionIds].map((id) => regionById.get(id).owner);
-    const distinctOwners = new Set(owners);
-    const [x1, y1] = regionVertices[entry.a];
-    const [x2, y2] = regionVertices[entry.b];
-    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    line.setAttribute("x1", `${x1}`);
-    line.setAttribute("y1", `${y1}`);
-    line.setAttribute("x2", `${x2}`);
-    line.setAttribute("y2", `${y2}`);
-    if (entry.regionIds.size === 1 || distinctOwners.size > 1) {
-        line.setAttribute("class", "country-border");
-    } else {
-        line.setAttribute("class", "internal-boundary");
-    }
-    boundariesLayerEl.appendChild(line);
+        const owners = [...entry.regionIds].map((id) => regionById.get(id).owner);
+        const distinctOwners = new Set(owners);
+        const [x1, y1] = regionVertices[entry.a];
+        const [x2, y2] = regionVertices[entry.b];
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", `${x1}`);
+        line.setAttribute("y1", `${y1}`);
+        line.setAttribute("x2", `${x2}`);
+        line.setAttribute("y2", `${y2}`);
+        if (entry.regionIds.size === 1 || distinctOwners.size > 1) {
+            line.setAttribute("class", "country-border");
+        } else {
+            line.setAttribute("class", "internal-boundary");
+        }
+        boundariesLayerEl.appendChild(line);
     }
 
     // Dev tool ------------------------------------------------------------------------------------------
@@ -1732,79 +1897,104 @@ function renderMap() {
     // End of Dev tool ------------------------------------------------------------------------------------------
 
     for (const region of regions) {
-    if (!regionShapes[region.id] || regionShapes[region.id].length < 3) continue;
-    const btn = document.createElement("button");
-    btn.className = "region-btn";
-    if (region.capital) btn.classList.add("capital");
-    if (selectedRegionId === region.id) btn.classList.add("selected");
-    btn.style.background = getCountry(region.owner).color;
-    const center = polygonCentroid(regionShapes[region.id]);
-    const safeCenter = findSafePointInsideRegion(regionShapes[region.id], center.x, center.y);
-    btn.style.left = `${safeCenter.x}px`;
-    btn.style.top = `${safeCenter.y}px`;
-    btn.textContent = region.army;
-    btn.title = `${region.id} (${getCountry(region.owner).name})`;
-    btn.setAttribute("data-region-id", region.id);
-    btn.addEventListener("click", () => onRegionClick(region.id));
-    mapEl.appendChild(btn);
 
-    if (region.capital) {
-        const offsets = [
-        [34, -22],
-        [-34, -22],
-        [34, 22],
-        [-34, 22],
-        [0, -38],
-        [0, 38]
-        ];
-        let sx = safeCenter.x;
-        let sy = safeCenter.y;
-        for (const [dx, dy] of offsets) {
-        const tx = center.x + dx;
-        const ty = center.y + dy;
-        if (pointInPolygon(tx, ty, regionShapes[region.id])) {
-            sx = tx;
-            sy = ty;
-            break;
-        }
-        }
-        const safeStar = findSafePointInsideRegion(regionShapes[region.id], sx, sy);
-        const star = document.createElement("div");
-        star.className = "capital-star";
-        star.textContent = "★";
-        star.style.left = `${safeStar.x}px`;
-        star.style.top = `${safeStar.y}px`;
-        mapEl.appendChild(star);
-    }
 
-    if (region.factories > 0) {
-        const factoryOffsets = [
-        [18, -18],
-        [-18, -18],
-        [18, 18],
-        [-18, 18],
-        [0, -26],
-        [0, 26]
-        ];
-        let fx = safeCenter.x;
-        let fy = safeCenter.y;
-        for (const [dx, dy] of factoryOffsets) {
-        const tx = center.x + dx;
-        const ty = center.y + dy;
-        if (pointInPolygon(tx, ty, regionShapes[region.id])) {
-            fx = tx;
-            fy = ty;
-            break;
+        if (!regionShapes[region.id] || regionShapes[region.id].length < 3) continue;
+        const btn = document.createElement("button");
+        btn.className = "region-btn";
+        if (region.capital) btn.classList.add("capital");
+        if (selectedRegionId === region.id) btn.classList.add("selected");
+        btn.style.background = getCountry(region.owner).color;
+        const center = polygonCentroid(regionShapes[region.id]);
+        const safeCenter = findSafePointInsideRegion(regionShapes[region.id], center.x, center.y);
+        btn.style.left = `${safeCenter.x}px`;
+        btn.style.top = `${safeCenter.y}px`;
+        btn.textContent = region.army;
+        btn.title = `${region.id} (${getCountry(region.owner).name})`;
+        btn.setAttribute("data-region-id", region.id);
+        btn.addEventListener("click", () => onRegionClick(region.id));
+        mapEl.appendChild(btn);
+
+        if (region.capital) {
+            const offsets = [
+                [34, -22],
+                [-34, -22],
+                [34, 22],
+                [-34, 22],
+                [0, -38],
+                [0, 38]
+            ];
+            let sx = safeCenter.x;
+            let sy = safeCenter.y;
+            for (const [dx, dy] of offsets) {
+                const tx = center.x + dx;
+                const ty = center.y + dy;
+                if (pointInPolygon(tx, ty, regionShapes[region.id])) {
+                    sx = tx;
+                    sy = ty;
+                    break;
+                }
+            }
+            const safeStar = findSafePointInsideRegion(regionShapes[region.id], sx, sy);
+            const star = document.createElement("div");
+            star.className = "capital-star";
+            star.textContent = "★";
+            star.style.left = `${safeStar.x}px`;
+            star.style.top = `${safeStar.y}px`;
+            mapEl.appendChild(star);
         }
+
+        if (region.factories > 0) {
+            const factoryOffsets = [
+                [18, -18],
+                [-18, -18],
+                [18, 18],
+                [-18, 18],
+                [0, -26],
+                [0, 26]
+                ];
+            let fx = safeCenter.x;
+            let fy = safeCenter.y;
+            for (const [dx, dy] of factoryOffsets) {
+                const tx = center.x + dx;
+                const ty = center.y + dy;
+                if (pointInPolygon(tx, ty, regionShapes[region.id])) {
+                    fx = tx;
+                    fy = ty;
+                    break;
+                }
+            }
+            const safeFactory = findSafePointInsideRegion(regionShapes[region.id], fx, fy);
+            const icon = document.createElement("div");
+            icon.className = "factory-icon";
+            icon.style.left = `${safeFactory.x}px`;
+            icon.style.top = `${safeFactory.y}px`;
+            icon.innerHTML = `<div class="factory-gear">⚙</div><div class="factory-count">${region.factories}</div>`;
+            mapEl.appendChild(icon);
         }
-        const safeFactory = findSafePointInsideRegion(regionShapes[region.id], fx, fy);
-        const icon = document.createElement("div");
-        icon.className = "factory-icon";
-        icon.style.left = `${safeFactory.x}px`;
-        icon.style.top = `${safeFactory.y}px`;
-        icon.innerHTML = `<div class="factory-gear">⚙</div><div class="factory-count">${region.factories}</div>`;
-        mapEl.appendChild(icon);
-    }
+
+        // Отображение артиллерии (внутри цикла region of regions)
+        if (region.artillery > 0) {
+            const artilleryOffsets = [[-20, 18], [20, -18], [-20, -18]];
+            let ax = safeCenter.x;
+            let ay = safeCenter.y;
+            for (const [dx, dy] of artilleryOffsets) {
+                const tx = center.x + dx;
+                const ty = center.y + dy;
+                if (pointInPolygon(tx, ty, regionShapes[region.id])) {
+                    ax = tx; ay = ty;
+                    break;
+                }
+            }
+            const safeArtillery = findSafePointInsideRegion(regionShapes[region.id], ax, ay);
+            const artIcon = document.createElement("div");
+            artIcon.className = "artillery-icon";
+            artIcon.style.left = `${safeArtillery.x}px`;
+            artIcon.style.top = `${safeArtillery.y}px`;
+            artIcon.innerHTML = `<span>🏹</span><span class="artillery-count">${region.artillery}</span>`;
+            mapEl.appendChild(artIcon);
+        }
+
     }
 }
 
@@ -1885,57 +2075,79 @@ async function doMove(from, to) {
 
 async function doAttack(from, to) {
     if (!atWar) {
-    addLog("Attacks are prohibited: a truce is in effect.");
-    return;
+        addLog("Attacks are prohibited: a truce is in effect.");
+        return;
     }
     if (from.owner !== currentPlayer || to.owner === currentPlayer) return;
     if (areAllies(from.owner, to.owner)) {
-    addLog("You cannot attack an ally's region.");
-    return;
+        addLog("You cannot attack an ally's region.");
+        return;
     }
     if (!neighbors[from.id]?.includes(to.id)) {
-    addLog("An attack can only be launched against an adjacent enemy region.");
-    return;
+        addLog("An attack can only be launched against an adjacent enemy region.");
+        return;
     }
     if (blockedMoveSources.has(from.id)) {
-    addLog("You cannot attack from this region this turn (it has already received troops).");
-    return;
+        addLog("You cannot attack from this region this turn (it has already received troops).");
+        return;
     }
     if (from.army <= 1) {
-    addLog("An attack is not possible: there is only 1 unit in the attacking region.");
-    return;
+        addLog("An attack is not possible: there is only 1 unit in the attacking region.");
+        return;
     }
-    const maxAttack = from.army - 1;
-    const attackUnits = await showUnitsPrompt("How many units should I send into battle?", maxAttack);
-    if (attackUnits == null) return;
-    if (!Number.isInteger(attackUnits) || attackUnits < 1 || attackUnits > maxAttack) {
-    addLog("Invalid number of attacking units.");
-    return;
+        const maxAttack = from.army - 1;
+        const attackUnits = await showUnitsPrompt("How many units should I send into battle?", maxAttack);
+        if (attackUnits == null) return;
+        if (!Number.isInteger(attackUnits) || attackUnits < 1 || attackUnits > maxAttack) {
+        addLog("Invalid number of attacking units.");
+        return;
     }
 
     if (attackUnits > to.army) {
-    const defenderArmy = to.army;
-    const survivors = attackUnits - defenderArmy;
-    from.army -= attackUnits;
+        const defenderArmy = to.army; // Изначальный гарнизон врага
+        const survivors = attackUnits - defenderArmy;
+        from.army -= attackUnits;
 
-    if (to.factories && to.factories > 0) {
-        to.factories -= 1;
-        addLog(`Infrastructure damaged! Number of factories in the region ${to.id} decreased by 1. Remaining: ${to.factories}`);
-    }
+        // Фиксируем потери:
+        if (globalCasualties[to.owner]) {
+            globalCasualties[to.owner].troops += defenderArmy; // Защитник потерял абсолютно всех солдат
+        }
+        if (globalCasualties[from.owner]) {
+            globalCasualties[from.owner].troops += defenderArmy; // Нападающий потерял ровно столько же, сколько было у защитника
+        }
 
-    to.owner = currentPlayer;
-    to.army = survivors;
-    blockedMoveSources.add(to.id);
-    addLog(
-        `${getCountry(currentPlayer).name} captures ${to.id}. Sent into battle ${attackUnits}, survived ${survivors}.`
-    );
+        if (to.factories && to.factories > 0) {
+            to.factories -= 1;
+            if (globalCasualties[to.owner]) {
+                globalCasualties[to.owner].factories += 1; // Фабрика уничтожена у защитника
+            }
+            addLog(`Infrastructure damaged! Number of factories in the region ${to.id} decreased by 1. Remaining: ${to.factories}`);
+        }
+
+        // ЛОГИКА 3: Конвертируем оставшуюся артиллерию региона в пехоту (1 к 1)
+        const capturedArtillery = to.artillery || 0;
+        to.artillery = 0; // Вся артиллерия в регионе уничтожается/захватывается
+
+        to.owner = currentPlayer;
+        // К выжившим штурмующим (survivors) добавляются переплавленные в юнитов пушки
+        to.army = survivors + capturedArtillery; 
+        
+        blockedMoveSources.add(to.id);
+
+        let trophyLog = capturedArtillery > 0 ? ` ${capturedArtillery} enemy artillery converted into your units.` : "";
+        addLog(`${getCountry(currentPlayer).name} captures ${to.id}. Sent into battle ${attackUnits}, survived ${survivors}.${trophyLog}`);
+        
     } else {
-    from.army -= attackUnits;
-    to.army -= attackUnits;
-    addLog(
-        `${getCountry(currentPlayer).name} attacks ${to.id} from ${from.id}: both sides lost ${attackUnits}.`
-    );
+        from.army -= attackUnits;
+        to.army -= attackUnits;
+
+        // В случае ничьей или поражения штурма обе стороны теряли ровно по количеству attackUnits
+        if (globalCasualties[from.owner]) globalCasualties[from.owner].troops += attackUnits;
+        if (globalCasualties[to.owner]) globalCasualties[to.owner].troops += attackUnits;
+
+        addLog(`${getCountry(currentPlayer).name} attacks ${to.id} from ${from.id}: both sides lost ${attackUnits}.`);
     }
+
 }
 
 async function allocatePendingReinforcement(targetRegion) {
@@ -1970,111 +2182,185 @@ async function allocatePendingReinforcement(targetRegion) {
 }
 
 async function onRegionClick(id) {
+    if (zombieCountRange) zombieCountRange.disabled = true;
     if (winner || isPassPhase) return;
 
     const clicked = getRegion(id);
     if (pendingReinforcement) {
-    if (clicked.owner !== currentPlayer) {
-        addLog("Reinforcements can only be deployed to your region.");
+        if (clicked.owner !== currentPlayer) {
+            addLog("Reinforcements can only be deployed to your region.");
+            return;
+        }
+        await allocatePendingReinforcement(clicked);
         return;
-    }
-    await allocatePendingReinforcement(clicked);
-    return;
     }
 
     if (pendingDiplomacyAction) {
-    if (clicked.owner === currentPlayer) {
-        addLog("You cannot make or break an alliance with your own country.");
+        if (clicked.owner === currentPlayer) {
+            addLog("You cannot make or break an alliance with your own country.");
+            return;
+        }
+
+        if (pendingDiplomacyAction === "form") {
+            formAlliance(currentPlayer, clicked.owner);
+            addLog(`${getCountry(currentPlayer).name} formed an alliance with ${getCountry(clicked.owner).name}.`);
+        } else if (pendingDiplomacyAction === "break") {
+            breakAlliance(currentPlayer, clicked.owner);
+            addLog(`${getCountry(currentPlayer).name} broke alliance with ${getCountry(clicked.owner).name}.`);
+        }
+
+        pendingDiplomacyAction = null;
+        selectedRegionId = null;
+        checkWinner();
+        render();
         return;
-    }
-
-    if (pendingDiplomacyAction === "form") {
-        formAlliance(currentPlayer, clicked.owner);
-        addLog(`${getCountry(currentPlayer).name} formed an alliance with ${getCountry(clicked.owner).name}.`);
-    } else if (pendingDiplomacyAction === "break") {
-        breakAlliance(currentPlayer, clicked.owner);
-        addLog(`${getCountry(currentPlayer).name} broke alliance with ${getCountry(clicked.owner).name}.`);
-    }
-
-    pendingDiplomacyAction = null;
-    selectedRegionId = null;
-    checkWinner();
-    render();
-    return;
     }
 
     if (pendingFactoryAction) {
-    if (clicked.owner !== currentPlayer) {
-        addLog("Factories can only be managed in your own regions.");
+        if (clicked.owner !== currentPlayer) {
+            addLog("Factories can only be managed in your own regions.");
+            return;
+        }
+
+        if (pendingFactoryAction === "build") {
+            const completedTurns = turnsCompletedByCountry.get(currentPlayer) || 0;
+            if (!factoriesEnabled) {
+                addLog("Factories mode is disabled.");
+                return;
+            }
+            if (completedTurns < 1) {
+                addLog("You can build factories starting from your 2nd turn.");
+                return;
+            }
+            const maxBuild = Math.min(clicked.army, 10 - (clicked.factories || 0));
+            if (maxBuild < 1) {
+                addLog("You cannot build more factories in this region.");
+                return;
+            }
+            const toBuild = await showUnitsPrompt("How many factories should be built?", maxBuild);
+            if (toBuild == null) return;
+            clicked.army -= toBuild;
+            clicked.factories = (clicked.factories || 0) + toBuild;
+            addLog(`${getCountry(currentPlayer).name} built ${toBuild} factories in ${clicked.id}.`);
+        }
+
+        if (pendingFactoryAction === "demolish") {
+            if (!factoriesEnabled) {
+                addLog("Factories mode is disabled.");
+                return;
+            }
+            const maxDemolish = clicked.factories || 0;
+            if (maxDemolish < 1) {
+                addLog("There are no factories to demolish in this region.");
+                return;
+            }
+            const toDemolish = await showUnitsPrompt("How many factories should be demolished?", maxDemolish);
+            if (toDemolish == null) return;
+            clicked.factories = (clicked.factories || 0) - toDemolish;
+            clicked.army += toDemolish;
+            addLog(`${getCountry(currentPlayer).name} demolished ${toDemolish} factories in ${clicked.id}.`);
+        }
+
+        // ИСПРАВЛЕНО: Строки сброса режимов удалены из этого блока!
+        // Теперь выбранный регион и режим стройки остаются активными в памяти.
+        render();
         return;
     }
 
-    if (pendingFactoryAction === "build") {
-        const completedTurns = turnsCompletedByCountry.get(currentPlayer) || 0;
-        if (!factoriesEnabled) {
-        addLog("Factories mode is disabled.");
-        return;
+        // === НОВЫЙ БЛОК: Бесконечный режим управления артиллерией ===
+    if (pendingArtilleryAction) {
+        if (clicked.owner !== currentPlayer) {
+            addLog("Artillery can only be managed in your own regions.");
+            return;
         }
-        if (completedTurns < 1) {
-        addLog("You can build factories starting from your 2nd turn.");
-        return;
-        }
-        const maxBuild = Math.min(clicked.army, 10 - (clicked.factories || 0));
-        if (maxBuild < 1) {
-        addLog("You cannot build more factories in this region.");
-        return;
-        }
-        const toBuild = await showUnitsPrompt("How many factories should be built?", maxBuild);
-        if (toBuild == null) return;
-        clicked.army -= toBuild;
-        clicked.factories = (clicked.factories || 0) + toBuild;
-        addLog(`${getCountry(currentPlayer).name} built ${toBuild} factories in ${clicked.id}.`);
-    }
 
-    if (pendingFactoryAction === "demolish") {
-        if (!factoriesEnabled) {
-        addLog("Factories mode is disabled.");
-        return;
-        }
-        const maxDemolish = clicked.factories || 0;
-        if (maxDemolish < 1) {
-        addLog("There are no factories to demolish in this region.");
-        return;
-        }
-        const toDemolish = await showUnitsPrompt("How many factories should be demolished?", maxDemolish);
-        if (toDemolish == null) return;
-        clicked.factories = (clicked.factories || 0) - toDemolish;
-        clicked.army += toDemolish;
-        addLog(`${getCountry(currentPlayer).name} demolished ${toDemolish} factories in ${clicked.id}.`);
-    }
+        if (pendingArtilleryAction === "build") {
+            const completedTurns = turnsCompletedByCountry.get(currentPlayer) || 0;
+            if (completedTurns < 1) {
+                addLog("You can build artillery starting from your 2nd turn.");
+                return;
+            }
+            if ((clicked.factories || 0) < 2 || clicked.army < 2) {
+                addLog("You need at least 2 factories and 2 infantry units to build artillery.");
+                return;
+            }
+            
+            // ИСПРАВЛЕНО: Теперь считаем лимит и по пехоте (по 2 на пушку), и по фабрикам (минус 1 фабрика должна остаться для контроля региона)
+            const maxByArmy = Math.floor(clicked.army / 2);
+            const maxByFactories = clicked.factories - 1; // Оставляем минимум 1 фабрику в регионе, чтобы не уйти в минус
+            const maxArtilleryCanBuild = Math.min(maxByArmy, maxByFactories);
 
-    pendingFactoryAction = null;
-    selectedRegionId = null;
-    render();
-    return;
+            if (maxArtilleryCanBuild < 1) {
+                addLog("Not enough resources! Remember: 1 artillery costs 2 troops AND 1 factory.");
+                return;
+            }
+
+            const toBuildArt = await showUnitsPrompt("How many artillery units should be built? (Cost: 2 troops + 1 factory each)", maxArtilleryCanBuild);
+            if (toBuildArt == null) return;
+            
+            // Списываем ресурсы за каждую построенную пушку
+            clicked.army -= (toBuildArt * 2);      // Снимаем по 2 пехотинца
+            clicked.factories -= toBuildArt;       // СНИМАЕМ по 1 фабрике!
+            clicked.artillery = (clicked.artillery || 0) + toBuildArt;
+            
+            addLog(`${getCountry(currentPlayer).name} built ${toBuildArt} artillery in ${clicked.id} (Spent: ${toBuildArt * 2} troops, ${toBuildArt} fac.).`);
+        }
+
+
+        if (pendingArtilleryAction === "scrap") {
+            const maxScrap = clicked.artillery || 0;
+            if (maxScrap < 1) {
+                addLog("There is no artillery to delete in this region.");
+                return;
+            }
+            const toScrapArt = await showUnitsPrompt("How many artillery units should be deleted?", maxScrap);
+            if (toScrapArt == null) return;
+
+            clicked.artillery = (clicked.artillery || 0) - toScrapArt;
+            clicked.army += toScrapArt; // Удаление пушки возвращает 1 юнита в армию
+            addLog(`${getCountry(currentPlayer).name} deleted ${toScrapArt} artillery in ${clicked.id}.`);
+        }
+
+        // Мы НЕ сбрасываем selectedRegionId и pendingArtilleryAction! 
+        // Регион и режим остаются активными для непрерывных кликов.
+        render();
+        return;
     }
 
     if (!selectedRegionId) {
-    if (clicked.owner !== currentPlayer) {
-        addLog("First, select your country's region.");
+        if (clicked.owner !== currentPlayer) {
+            addLog("First, select your country's region.");
+            return;
+        }
+        selectedRegionId = id;
+        
+        // Динамически разблокируем кнопки действий для выбранного региона
+        const completedTurns = turnsCompletedByCountry.get(currentPlayer) || 0;
+        
+        // Кнопка постройки активна, если это минимум 2-й ход, и в регионе есть 2+ фабрики и 2+ юнита
+        buildArtilleryBtn.disabled = (completedTurns < 1) || (clicked.factories < 2) || (clicked.army < 2);
+        
+        // Кнопка удаления активна, если в регионе есть хотя бы 1 единица артиллерии
+        scrapArtilleryBtn.disabled = !clicked.artillery || (clicked.artillery < 1);
+        
+        render();
         return;
-    }
-    selectedRegionId = id;
-    render();
-    return;
     }
 
     const selected = getRegion(selectedRegionId);
-    if (mode === "move") {
-    await doMove(selected, clicked);
-    } else {
-    await doAttack(selected, clicked);
+    if (mode === "move") { 
+        await doMove(selected, clicked); 
+    } else if (mode === "attack") { 
+        await doAttack(selected, clicked); 
+    } else if (mode === "artillery") {
+        await doArtilleryAttack(selected, clicked);
     }
 
     selectedRegionId = null;
     checkWinner();
     render();
 }
+
 
 function render() {
     renderStatus();
@@ -2089,6 +2375,10 @@ function showPassOverlay() {
 }
 
 function hidePassOverlay() {
+    // Додайте ці рядки туди, де оновлюється доступність кнопок у вашому коді (наприклад, в renderStatus чи hidePassOverlay)
+    buildArtilleryBtn.disabled = isPassPhase || Boolean(pendingReinforcement);
+    scrapArtilleryBtn.disabled = isPassPhase || Boolean(pendingReinforcement);
+
     isPassPhase = false;
     passOverlayEl.classList.remove("show");
     applyReinforcementForCurrentPlayer();
@@ -2121,6 +2411,110 @@ function applyReinforcementForCurrentPlayer() {
     `${getCountry(currentPlayer).name}: distribute +${total} reinforcement units across your regions (you can split them).`
     );
 }
+
+async function doArtilleryAttack(from, to) {
+    if (!atWar) { addLog("Attacks are prohibited: a truce is in effect."); return; }
+    if (from.owner !== currentPlayer || to.owner === currentPlayer) return;
+    if (areAllies(from.owner, to.owner)) { addLog("You cannot target an ally."); return; }
+    if (!neighbors[from.id]?.includes(to.id)) { addLog("Artillery can only fire at adjacent regions."); return; }
+    if (from.artillery < 1) { addLog("No artillery available in this region."); return; }
+
+    if (blockedMoveSources.has(from.id)) {
+        addLog("This artillery has already fired or received troops in this turn.");
+        return;
+    }
+
+    // ЛОГИКА 2: Расчет урона. Базовый рандом 1-40%, но умножается на количество артиллерии в регионе
+    const baseRandom = Math.floor(Math.random() * 40) + 1; // 1-40%
+    const totalMultiplier = from.artillery; // Сколько пушек стреляет
+    
+    // Итоговый процент урона (можно ограничить максимум 90%, чтобы не уничтожать всю армию за раз, если пушек много)
+    const finalPercent = Math.min(90, baseRandom * totalMultiplier);
+    const lostUnits = Math.max(1, Math.floor(to.army * (finalPercent / 100)));
+    
+    // Защитник теряет юнитов от обстрела
+    to.army = Math.max(1, to.army - lostUnits);
+    if (globalCasualties[to.owner]) {
+        globalCasualties[to.owner].troops += lostUnits; // Записываем потери защищающейся фракции
+    }
+
+    let infrastructureLog = "";
+    // ЛОГИКА 1: Уничтожение 1 фабрики в атакуемом регионе, если они там есть
+    if (to.factories && to.factories > 0) {
+        to.factories -= 1;
+        if (globalCasualties[to.owner]) {
+            globalCasualties[to.owner].factories += 1; // Записываем уничтоженную фабрику владельцу региона
+        }
+        infrastructureLog = ` Infrastructure damaged! 1 factory destroyed in ${to.id}.`;
+    }
+
+    blockedMoveSources.add(from.id); 
+
+    addLog(`💥 Artillery Strike! ${from.artillery} Artillery in ${from.id} fired at ${to.id}. Enemy lost ${lostUnits} units (-${finalPercent}%).${infrastructureLog}`);
+}
+
+// === СЛУШАТЕЛИ КНОПОК АРТИЛЛЕРИИ И ФАБРИК (ВЗАИМНЫЙ СБРОС СТРОЙКИ) ===
+
+if (buildFactoryBtn) {
+    buildFactoryBtn.addEventListener("click", () => {
+        pendingArtilleryAction = null; // Выключаем артиллерию, если она была активна
+        if (pendingFactoryAction === "build") {
+            pendingFactoryAction = null;
+            selectedRegionId = null;
+            addLog("Режим строительства фабрик отключен.");
+        } else {
+            pendingFactoryAction = "build";
+            addLog("🔧 Режим строительства включен. Кликайте по регионам.");
+        }
+        render();
+    });
+}
+
+if (demolishFactoryBtn) {
+    demolishFactoryBtn.addEventListener("click", () => {
+        pendingArtilleryAction = null; // Выключаем артиллерию
+        if (pendingFactoryAction === "demolish") {
+            pendingFactoryAction = null;
+            selectedRegionId = null;
+            addLog("Режим сноса фабрик отключен.");
+        } else {
+            pendingFactoryAction = "demolish";
+            addLog("🔨 Режим сноса включен. Кликайте по регионам.");
+        }
+        render();
+    });
+}
+
+if (buildArtilleryBtn) {
+    buildArtilleryBtn.addEventListener("click", () => {
+        pendingFactoryAction = null; // Выключаем фабрики, чтобы режимы не конфликтовали
+        if (pendingArtilleryAction === "build") {
+            pendingArtilleryAction = null; // Повторный клик — выключаем режим
+            selectedRegionId = null;
+            addLog("Режим постройки артиллерии отключен.");
+        } else {
+            pendingArtilleryAction = "build"; // Включаем режим
+            addLog("🏹 Режим постройки артиллерии включен. Кликайте по регионам.");
+        }
+        render();
+    });
+}
+
+if (scrapArtilleryBtn) {
+    scrapArtilleryBtn.addEventListener("click", () => {
+        pendingFactoryAction = null; // Выключаем фабрики
+        if (pendingArtilleryAction === "scrap") {
+            pendingArtilleryAction = null; // Повторный клик — выключаем режим
+            selectedRegionId = null;
+            addLog("Режим удаления артиллерии отключен.");
+        } else {
+            pendingArtilleryAction = "scrap"; // Включаем режим
+            addLog("❌ Режим удаления артиллерии включен. Кликайте по регионам.");
+        }
+        render();
+    });
+}
+
 
 document.getElementById("moveModeBtn").addEventListener("click", () => {
     if (isPassPhase || pendingReinforcement || pendingDiplomacyAction || pendingFactoryAction) return;
@@ -2185,35 +2579,6 @@ factoriesToggleBtn.addEventListener("click", () => {
     render();
 });
 
-buildFactoryBtn.addEventListener("click", () => {
-    if (winner || isPassPhase || pendingReinforcement) return;
-    if (!factoriesEnabled) {
-    addLog("Factories mode is disabled.");
-    return;
-    }
-    if ((turnsCompletedByCountry.get(currentPlayer) || 0) < 1) {
-    addLog("You can build factories starting from your 2nd turn.");
-    return;
-    }
-    pendingDiplomacyAction = null;
-    pendingFactoryAction = "build";
-    selectedRegionId = null;
-    addLog("Factories: click one of your regions to build factories.");
-    render();
-});
-
-demolishFactoryBtn.addEventListener("click", () => {
-    if (winner || isPassPhase || pendingReinforcement) return;
-    if (!factoriesEnabled) {
-    addLog("Factories mode is disabled.");
-    return;
-    }
-    pendingDiplomacyAction = null;
-    pendingFactoryAction = "demolish";
-    selectedRegionId = null;
-    addLog("Factories: click one of your regions to demolish factories.");
-    render();
-});
 
 document.getElementById("endTurnBtn").addEventListener("click", () => {
     if (winner || isPassPhase || pendingReinforcement || pendingDiplomacyAction || pendingFactoryAction) return;
@@ -2276,6 +2641,7 @@ document.addEventListener("pointercancel", () => {
 });
 document.getElementById("restartBtn").addEventListener("click", () => loadMap(activeMapId));
 document.getElementById("loadMapBtn").addEventListener("click", () => {
+    currentZombieBaseMapKey = null;
     const mapId = mapSelectEl.value;
     loadMap(mapId);
 });
@@ -2407,3 +2773,14 @@ function makeAiTurn(countryId) {
     setTimeout(nextTurn, 500);
     }
 }
+
+artilleryAttackModeBtn.addEventListener("click", () => {
+    if (isPassPhase || pendingReinforcement) return;
+    mode = "artillery";
+    selectedRegionId = null;
+    addLog("Artillery Strike Mode selected. Select your region with artillery, then target.");
+    render();
+});
+
+
+
