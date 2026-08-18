@@ -6,29 +6,34 @@
     <title>Симулятор Войны Границ</title>
     <!-- Здесь будет ссылка на CSS или тег <style> -->
     <style>
-        /* Сброс отступов и центрирование интерфейса по центру экрана */
         body {
             margin: 0;
-            padding: 0;
+            padding: 10px 0;       /* Добавили небольшие отступы сверху и снизу */
             background-color: #1a1a1a;
             color: #fff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start; /* Изменили с center на flex-start для корректного скролла */
             min-height: 100vh;
-            overflow: hidden;
-            touch-action: none;
+            overflow-x: hidden;    /* Блокируем скролл только по горизонтали */
+            overflow-y: auto;      /* Включаем автоматический вертикальный скролл, если контент не влезает */
         }
+
 
         /* Панель управления (кнопки и статус-бар) */
         #controls {
             margin-bottom: 8px;
             display: flex;
-            gap: 15px;
+            gap: 8px;              /* Уменьшили зазор между кнопками с 15px до 8px */
             align-items: center;
             z-index: 10;
+            flex-wrap: wrap;       /* Позволяет кнопкам автоматически переноситься на новую строку */
+            justify-content: center; /* Центрирует перенесенные кнопки */
+            padding: 0 10px;       /* Защитные отступы по бокам экрана */
+            width: 100%;           /* Растягиваем панель на всю доступную ширину */
+            box-sizing: border-box;
         }
 
         /* Общий стиль для кнопок */
@@ -36,12 +41,13 @@
             background-color: #333;
             color: #fff;
             border: 2px solid #555;
-            padding: 10px 20px;
-            font-size: 16px;
+            padding: 8px 14px;      /* Немного уменьшили внутренние отступы кнопок */
+            font-size: 14px;        /* Уменьшили базовый шрифт с 16px до 14px */
             cursor: pointer;
             border-radius: 5px;
             transition: all 0.3s ease;
         }
+
 
         button:hover:not(:disabled) {
             background-color: #555;
