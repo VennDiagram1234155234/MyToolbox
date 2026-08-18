@@ -359,18 +359,23 @@
                 // 2. Сортируем массив по убыванию
                 allIntensities.sort((a, b) => b - a);
                 
-                // Настройка количества топ-точек
-                // Теперь у нас два высших порога: для черных и для красных точек
-                let maxBlackPoints = 5;   // Сколько САМЫХ жестких эпицентров станут черными
-                let maxRedPoints = 15;   // Сколько точек после них будут гореть красными
-                
-                let blackThreshold = allIntensities.length > 0 
-                    ? Math.max(25, allIntensities[Math.min(allIntensities.length - 1, maxBlackPoints - 1)]) 
-                    : 25;
-                    
-                let redThreshold = allIntensities.length > 0 
-                    ? Math.max(10, allIntensities[Math.min(allIntensities.length - 1, maxBlackPoints + maxRedPoints - 1)]) 
-                    : 10;
+                // Настройка динамических порогов на основе процентилей (5 равных групп по 20%)
+                let greenThreshold = 0;
+                let yellowThreshold = 0;
+                let orangeThreshold = 0;
+                let redThreshold = 0;
+                let blackThreshold = 0;
+
+                if (allIntensities.length > 0) {
+                    const totalCount = allIntensities.length;
+                    // allIntensities уже отсортирован по убыванию, поэтому берем индексы с конца к началу
+                    greenThreshold  = allIntensities[Math.min(totalCount - 1, Math.floor(totalCount * 0.80))];
+                    yellowThreshold = allIntensities[Math.min(totalCount - 1, Math.floor(totalCount * 0.60))];
+                    orangeThreshold = allIntensities[Math.min(totalCount - 1, Math.floor(totalCount * 0.40))];
+                    redThreshold    = allIntensities[Math.min(totalCount - 1, Math.floor(totalCount * 0.20))];
+                    blackThreshold  = allIntensities[0]; // Самые жесткие эпицентры (топ-20% и выше)
+                }
+
 
                 // 3. Отрисовка идеально круглых сглаженных пятен
                 for (let r = 0; r < heatmapGrid.length; r++) {
@@ -386,36 +391,32 @@
                             let centerColor;
                             let middleColor = 'rgba(0, 0, 0, 0)'; // По умолчанию размывается в пустоту
 
-                            // Расширенная таблица интенсивности: Черный -> Красный -> Оранжевый -> Желтый -> Зеленый
-                            if (intensity >= blackThreshold) {
-                                // АБСОЛЮТНЫЙ ПИК: угольно-черный центр с переходом в сочный красный ореол
+                            // Распределение цветов строго по 5 равным группам
+                            if (intensity >= redThreshold && intensity > 0) {
+                                // Топ-20% самых жестких боев: угольно-черный центр с красным ореолом
                                 centerColor = 'rgba(15, 15, 15, 0.9)'; 
-                                middleColor = 'rgba(185, 28, 28, 0.4)'; // Красный контур, чтобы точка выделялась на темном фоне
-                            } else if (intensity >= redThreshold) {
-                                // Топ-бой: плотный красный
+                                middleColor = 'rgba(185, 28, 28, 0.4)'; 
+                            } else if (intensity >= orangeThreshold && intensity > 0) {
+                                // Следующие 20% (от 20% до 40% по интенсивности): плотный красный
                                 centerColor = 'rgba(220, 38, 38, 0.75)'; 
-                            } else {
-                                // Относительный расчет для остальных цветов ниже красного порога
-                                let factor = intensity / redThreshold;
-                                
-                                if (factor < 0.3) {
-                                    // Слабый бой: мягкий зеленый
-                                    let alpha = (factor / 0.3) * 0.45;
-                                    centerColor = `rgba(34, 197, 94, ${alpha})`; 
-                                } else if (factor < 0.65) {
-                                    // Средний бой: теплый желтый
-                                    centerColor = 'rgba(234, 179, 8, 0.55)'; 
-                                } else {
-                                    // Сильный бой: насыщенный оранжевый
-                                    centerColor = 'rgba(249, 115, 22, 0.65)'; 
-                                }
+                            } else if (intensity >= yellowThreshold && intensity > 0) {
+                                // Средние 20% (от 40% до 60%): насыщенный оранжевый
+                                centerColor = 'rgba(249, 115, 22, 0.65)'; 
+                            } else if (intensity >= greenThreshold && intensity > 0) {
+                                // Умеренные 20% (от 60% до 80%): теплый желтый
+                                centerColor = 'rgba(234, 179, 8, 0.55)'; 
+                            } else if (intensity > 0) {
+                                // Самые слабые 20% остаточных боев: мягкий зеленый
+                                centerColor = 'rgba(34, 197, 94, 0.45)'; 
                             }
+
 
                             // Плавное радиальное затухание цвета от центра к краям
                             grad.addColorStop(0, centerColor);       
-                            if (intensity >= blackThreshold) {
-                                grad.addColorStop(0.4, middleColor); // Добавляем контур только для выжженных черных точек
+                            if (intensity >= redThreshold && intensity > 0) {
+                                grad.addColorStop(0.4, middleColor); // Контур для выжженных черных точек
                             }
+
                             grad.addColorStop(1, 'rgba(0, 0, 0, 0)'); 
 
                             ctx.fillStyle = grad;
@@ -1244,6 +1245,40 @@
                         targetY: Math.floor(Math.random() * (HEIGHT - hR - 20)) + 10
                     });
                 }
+                // --- ДОБАВЛЕНИЕ: Гарнизоны из удерживаемых городов ---
+                settlements.forEach(s => {
+                    const borderXatY = borderPoints[Math.floor(s.y)];
+                    const isLeftControl = s.x < borderXatY; // Кто сейчас контролирует город
+
+                    // С шансом 20% при каждом цикле подкреплений город отправляет небольшой батальон
+                    if (Math.random() < 0.20) {
+                        const tType = getRandomTroopType();
+                        
+                        // Размеры гарнизонного отряда (чуть меньше стандартных для баланса)
+                        const h = Math.floor(Math.random() * (tType.maxH - tType.minH)) + tType.minH;
+                        const w = Math.floor(Math.random() * (tType.maxW - tType.minW)) + tType.minW;
+                        
+                        if (isLeftControl) {
+                            troopsLeft.push({
+                                x: s.x, y: s.y - h/2, w: w, h: h,
+                                type: tType.icon,
+                                troopSpeedY: tType.speedY,
+                                troopMarchSpeed: tType.marchX,
+                                pushPower: tType.pushPower,
+                                targetY: Math.floor(Math.random() * (HEIGHT - h - 20)) + 10
+                            });
+                        } else {
+                            troopsRight.push({
+                                x: s.x - w, y: s.y - h/2, w: w, h: h,
+                                type: tType.icon,
+                                troopSpeedY: tType.speedY,
+                                troopMarchSpeed: tType.marchX,
+                                pushPower: tType.pushPower,
+                                targetY: Math.floor(Math.random() * (HEIGHT - h - 20)) + 10
+                            });
+                        }
+                    }
+                });
 
                 
                 draw(); 
