@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Гра: З'єднай точки</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+        }
+
+        header {
+            margin-top: 10px;
+            text-align: center;
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 20px;
+            margin-bottom: 5px;
+            color: #00ffcc;
+        }
+
+        p {
+            font-size: 14px;
+            color: #aaaaaa;
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            display: flex;
+            gap: 15px;
+            z-index: 10;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #00ffcc;
+            color: #1a1a1a;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        button:hover {
+            background-color: #00cc99;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        button.clear-btn {
+            background-color: #ff4d4d;
+            color: white;
+        }
+
+        button.clear-btn:hover {
+            background-color: #cc3333;
+        }
+
+        #gameCanvas {
+            position: relative;
+            width: 50vw;
+            height: 60vh;
+            margin: 15vh auto;
+            display: block;
+            cursor: crosshair;
+            border: 2px dashed #00ffcc;
+            background-color: #1a1a1a;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>З'єднай точки</h1>
+        <p>Затисніть ліву кнопку миші, щоб вільно малювати лінії</p>
+    </header>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="controls">
+        <button onclick="clearCanvas()">Очистити лінії</button>
+        <!-- Нова кнопка автоматичного з'єднання -->
+        <button onclick="autoConnectPoints()" style="background-color: #ff00ff; color: white;">З'єднати точки</button>
+        <button onclick="generatePoints(); drawPoints();">Оновити точки</button>
+    </div>
+
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Налаштування точок
+        const MIN_POINTS = 10;
+        const MAX_POINTS = 50;
+        const POINT_RADIUS = 5;
+        let points = [];
+        let currentLinePoints = []; // Для збереження координат поточного малюнка від руки
+
+        // Стан малювання
+        let isDrawing = false;
+
+        // Оновлена функція: яскраві кольори + чорний, білий та сірий
+        function getRandomBrightColor() {
+            // З ймовірністю 20% підмішуємо чорний, білий або сірий
+            if (Math.random() < 0.20) {
+                const type = Math.floor(Math.random() * 3);
+                if (type === 0) return 'hsla(0, 0%, 0%, 1)';    // Чистий чорний
+                if (type === 1) return 'hsla(0, 0%, 100%, 1)';  // Чистий білий
+                return 'hsla(0, 0%, 50%, 1)';                   // Класичний сірий
+            }
+
+            // В інших 80% випадків повертаємо соковитий кольоровий відтінок
+            const hue = Math.floor(Math.random() * 360);
+            const saturation = Math.floor(Math.random() * 20) + 80;
+            const lightness = Math.floor(Math.random() * 10) + 45;
+            return `hsla(${hue}, ${saturation}%, ${lightness}%, 1)`;
+        }
+
+        // Функція генерації випадкового напівпрозорого пастельного кольору
+        function getRandomPastelColor() {
+            const hue = Math.floor(Math.random() * 360); // Випадковий тон (0-360)
+            const saturation = Math.floor(Math.random() * 20) + 70; // Насиченість 70-90% (м'які кольори)
+            const lightness = Math.floor(Math.random() * 15) + 75;  // Яскравість 75-90% (ефект пастелі/крейди)
+            return `hsla(${hue}, ${saturation}%, ${lightness}%, 0.3)`; // 0.3 — прозорість заливки
+        }
+
+
+        // Установка размера canvas под новые уменьшенные границы
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            drawPoints();
+        }
+
+        // Генерація випадкових точок строго всередині canvas
+        function generatePoints() {
+            // 1. ПОВНІСТЮ ОЧИЩАЄМО ЕКРАН ВІД СТАРИХ ТОЧОК ТА ЛІНІЙ
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            points = [];
+            // Випадкова кількість точок у заданому діапазоні (від MIN до MAX)
+            const count = Math.floor(Math.random() * (MAX_POINTS - MIN_POINTS + 1)) + MIN_POINTS;
+            
+            // Відступи від країв canvas, щоб точки не обрізалися рамкою
+            const padding = 30;
+
+            for (let i = 0; i < count; i++) {
+                const x = Math.random() * (canvas.width - padding * 2) + padding;
+                const y = Math.random() * (canvas.height - padding * 2) + padding;
+                points.push({ x, y });
+            }
+        }
+
+        // Малювання точок на екрані
+        function drawPoints() {
+            points.forEach(point => {
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, POINT_RADIUS, 0, Math.PI * 2);
+                ctx.fillStyle = '#00ffcc';
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = '#00ffcc';
+                ctx.fill();
+                ctx.closePath();
+            });
+            // Скидаємо тінь для ліній, щоб гра не гальмувала
+            ctx.shadowBlur = 0;
+        }
+
+        // Функция для вычисления точных координат курсора внутри холста
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            // Если это тач-событие на смартфоне, берем первый палец
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        function startDrawing(e) {
+            isDrawing = true;
+            currentLinePoints = []; // Очищуємо масив для нової лінії
+            const pos = getMousePos(e);
+            currentLinePoints.push(pos); // Записуємо першу точку
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            if (e.preventDefault) e.preventDefault();
+            const pos = getMousePos(e);
+            currentLinePoints.push(pos); // Записуємо кожну точку руху
+            ctx.lineWidth = 5;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+        }
+
+        function stopDrawing() {
+            if (!isDrawing) return;
+            isDrawing = false;
+
+            // Замикаємо та зафарбовуємо фігуру користувача
+            ctx.fillStyle = getRandomPastelColor();
+            ctx.fill(); 
+            ctx.stroke();
+            ctx.closePath();
+
+            // Знаходимо центр намальованої від руки фігури
+            if (currentLinePoints.length > 0) {
+                let handCenterX = 0;
+                let handCenterY = 0;
+                currentLinePoints.forEach(p => {
+                    handCenterX += p.x;
+                    handCenterY += p.y;
+                });
+                handCenterX /= currentLinePoints.length;
+                handCenterY /= currentLinePoints.length;
+
+                // Малюємо прямокутник з прапором у центрі вашої закарлюки
+                drawFlagInCenter(handCenterX, handCenterY);
+
+                drawCountryStats(handCenterX, handCenterY);
+            }
+        }
+
+
+
+        // Функція очищення полотна (зберігає точки)
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawPoints();
+        }
+
+        // Повністю виправлена функція автоматичного з'єднання точок
+        function autoConnectPoints() {
+            if (points.length < 3) return; 
+
+            // 1. Знаходимо геометричний центр усіх точок
+            let centerX = 0;
+            let centerY = 0;
+            points.forEach(p => {
+                centerX += p.x;
+                centerY += p.y;
+            });
+            centerX /= points.length;
+            centerY /= points.length;
+
+            // 2. Сортуємо точки за кутом відносно центру
+            let sortedPoints = [...points].sort((a, b) => {
+                let angleA = Math.atan2(a.y - centerY, a.x - centerX);
+                let angleB = Math.atan2(b.y - centerY, b.x - centerX);
+                return angleA - angleB;
+            });
+
+            // 3. Очищаємо екран і малюємо точки заново
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawPoints();
+
+            // 4. Функція для створення шляху через усі точки (кривими Безьє)
+            function buildCurvedPath() {
+                ctx.beginPath();
+                // Стаємо на першу точку
+                ctx.moveTo(sortedPoints[0].x, sortedPoints[0].y);
+
+                // Ведемо криві лінії через усі точки по колу
+                for (let i = 0; i < sortedPoints.length; i++) {
+                    const p1 = sortedPoints[i];
+                    // Якщо це остання точка, з'єднуємо її з найпершою [0]
+                    const p2 = sortedPoints[(i + 1) % sortedPoints.length]; 
+
+                    const midX = (p1.x + p2.x) / 2;
+                    const midY = (p1.y + p2.y) / 2;
+
+                    // Випадковий вигин індивідуально для кожного відрізка
+                    const bendForce = Math.random() * 35; 
+                    const controlX = midX + (Math.random() - 0.5) * bendForce;
+                    const controlY = midY + (Math.random() - 0.5) * bendForce;
+
+                    ctx.quadraticCurveTo(controlX, controlY, p2.x, p2.y);
+                }
+                ctx.closePath();
+            }
+
+            // КРОК А: Створюємо шлях, заливаємо його пастельним кольором і СКИДАЄМО
+            buildCurvedPath();
+            ctx.fillStyle = getRandomPastelColor();
+            ctx.fill(); 
+
+            // КРОК Б: Створюємо той самий шлях заново суто для обведення білою лінією
+            // Це захищає від "зрізання" кутів та багів відображення
+            buildCurvedPath();
+            ctx.lineWidth = 5;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = '#ffffff';
+
+            ctx.stroke();
+            ctx.closePath();
+
+            // Малюємо прямокутник із прапором точно в центрі
+            drawFlagInCenter(centerX, centerY);
+
+            // НОВОЕ: Добавляем вывод статистики прямо под флагом
+            drawCountryStats(centerX, centerY);
+        }
+
+
+        // Продвинутая функция рисования уникальных флагов с рисунками и фигурами
+        function drawFlagInCenter(centerX, centerY) {
+            const w = 60;  // Ширина флага
+            const h = 40;  // Высота флага
+            const x = centerX - w / 2; 
+            const y = centerY - h / 2; 
+
+            ctx.save(); 
+
+            // Белая рамка вокруг флага
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x - 1, y - 1, w + 2, h + 2);
+
+            // Маска-обрезка по границам флага
+            ctx.beginPath();
+            ctx.rect(x, y, w, h);
+            ctx.clip();
+
+            // Генерируем сочные/контрастные цвета
+            const c1 = getRandomBrightColor();
+            const c2 = getRandomBrightColor();
+            const c3 = getRandomBrightColor();
+
+            // Выбираем один из 7 уникальных стилей флага
+            const flagStyle = Math.floor(Math.random() * 7) + 1;
+
+            if (flagStyle === 1) {
+                // 1. Горизонтальный триколор
+                ctx.fillStyle = c1; ctx.fillRect(x, y, w, h / 3);
+                ctx.fillStyle = c2; ctx.fillRect(x, y + h / 3, w, h / 3);
+                ctx.fillStyle = c3; ctx.fillRect(x, y + (h / 3) * 2, w, h / 3);
+            } else if (flagStyle === 2) {
+                // 2. Вертикальный триколор
+                ctx.fillStyle = c1; ctx.fillRect(x, y, w / 3, h);
+                ctx.fillStyle = c2; ctx.fillRect(x + w / 3, y, w / 3, h);
+                ctx.fillStyle = c3; ctx.fillRect(x + (w / 3) * 2, y, w / 3, h);
+            } else if (flagStyle === 3) {
+                // 3. Скандинавский крест
+                ctx.fillStyle = c1; ctx.fillRect(x, y, w, h);
+                ctx.fillStyle = c2;
+                ctx.fillRect(x + w * 0.25, y, w * 0.12, h); 
+                ctx.fillRect(x, y + h * 0.4, w, h * 0.12);
+            } else if (flagStyle === 4) {
+                // 4. Двуцветный с треугольником у края (как Чехия/Филиппины)
+                ctx.fillStyle = c1; ctx.fillRect(x, y, w, h / 2);
+                ctx.fillStyle = c2; ctx.fillRect(x, y + h / 2, w, h / 2);
+                ctx.fillStyle = c3;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x + w * 0.35, y + h / 2);
+                ctx.lineTo(x, y + h);
+                ctx.fill();
+            } else if (flagStyle === 5) {
+                // 5. Четверти (как у Панамы)
+                ctx.fillStyle = c1; ctx.fillRect(x, y, w / 2, h / 2);         // Топ-лево
+                ctx.fillStyle = c2; ctx.fillRect(x + w / 2, y, w / 2, h / 2); // Топ-право
+                ctx.fillStyle = c3; ctx.fillRect(x, y + h / 2, w / 2, h / 2); // Бот-лево
+                ctx.fillStyle = c1; ctx.fillRect(x + w / 2, y + h / 2, w / 2, h / 2); // Бот-право
+            } else if (flagStyle === 6) {
+                // 6. Диагональное разделение (как Конго или Соломоновы острова)
+                ctx.fillStyle = c1; ctx.fillRect(x, y, w, h);
+                ctx.fillStyle = c2;
+                ctx.beginPath();
+                ctx.moveTo(x, y + h);
+                ctx.lineTo(x + w, y);
+                ctx.lineTo(x + w, y + h);
+                ctx.fill();
+            } else if (flagStyle === 7) {
+                // 7. Канадский столб (широкая полоса в центре)
+                ctx.fillStyle = c1; ctx.fillRect(x, y, w, h);
+                ctx.fillStyle = c2; ctx.fillRect(x + w * 0.25, y, w * 0.5, h);
+            }
+
+            // --- ДОБАВЛЕНИЕ СЛУЧАЙНОГО РИСУНКА/ЭМБЛЕМЫ ПО ЦЕНТРУ ---
+            // С шансом 70% наносим на флаг герб, чтобы они выглядели проработанными
+            if (Math.random() < 0.7) {
+                const emblemType = Math.floor(Math.random() * 3); // 3 вида эмблем
+                const emblemColor = Math.random() < 0.5 ? '#ffffff' : '#000000'; // Контрастный белый или черный герб
+                ctx.fillStyle = emblemColor;
+                ctx.strokeStyle = emblemColor;
+
+                const cx = x + w / 2;
+                const cy = y + h / 2;
+
+                if (emblemType === 0) {
+                    // Эмблема: Ромб
+                    ctx.beginPath();
+                    ctx.moveTo(cx, cy - 8);
+                    ctx.lineTo(cx + 8, cy);
+                    ctx.lineTo(cx, cy + 8);
+                    ctx.lineTo(cx - 8, cy);
+                    ctx.fill();
+                } else if (emblemType === 1) {
+                    // Эмблема: Геральдический полумесяц
+                    ctx.beginPath();
+                    ctx.arc(cx - 2, cy, 6, -Math.PI/2, Math.PI/2, false);
+                    ctx.arc(cx + 1, cy, 5, Math.PI/2, -Math.PI/2, true);
+                    ctx.fill();
+                } else if (emblemType === 2) {
+                    // Эмблема: Компактная четырехконечная звезда
+                    ctx.beginPath();
+                    ctx.moveTo(cx, cy - 8);
+                    ctx.quadraticCurveTo(cx, cy, cx + 8, cy);
+                    ctx.quadraticCurveTo(cx, cy, cx, cy + 8);
+                    ctx.quadraticCurveTo(cx, cy, cx - 8, cy);
+                    ctx.quadraticCurveTo(cx, cy, cx, cy - 8);
+                    ctx.fill();
+                }
+            }
+
+            ctx.restore(); 
+        }
+
+        // Функция генерации и отрисовки случайных параметров вымышленной страны
+        function drawCountryStats(centerX, centerY) {
+            // 1. Генерируем случайное население (от 500 тыс. до 80 млн. человек)
+            const population = Math.floor(Math.random() * 79500000) + 500000;
+
+            // 2. Армия: случайное число, но строго не более 20% от населения
+            const maxArmy = Math.floor(population * 0.20);
+            // Минимально в армии пусть будет хотя бы 1000 человек для защиты границ
+            const army = Math.floor(Math.random() * (maxArmy - 1000)) + 1000;
+
+            // 3. Бюджет: должен покрывать содержание армии и народа
+            // Посчитаем базовые расходы: например, $1000 на жителя и $5000 на военного
+            const minRequiredBudget = (population * 1000) + (army * 5000);
+            // Сам бюджет делаем случайным, но строго выше минимальных расходов (в золотых монетах / долларах)
+            const budget = minRequiredBudget + Math.floor(Math.random() * minRequiredBudget);
+
+            // --- ОТРИСОВКА КАРТОЧКИ СТАТИСТИКИ НА ЭКРАНЕ ---
+            ctx.save();
+            
+            // Настройки шрифта и текста
+            ctx.font = "bold 11px 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+            ctx.textAlign = "center";
+            
+            // Форматируем числа с пробелами, чтобы они легко читались (например: 12 345 678)
+            const formatNum = (num) => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+
+            const statsText = `👥 Нас.: ${formatNum(population)} | 🪖 Армия: ${formatNum(army)} | 💰 Бюджет: $${formatNum(budget)}`;
+
+            // Делаем плашку-подложку под текстом, чтобы он хорошо читался на любом фоне
+            ctx.font = "bold 11px 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+            const textWidth = ctx.measureText(statsText).width;
+            
+            // Рисуем полупрозрачный черный прямоугольник под текстом
+            ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+            ctx.fillRect(centerX - (textWidth / 2) - 8, centerY + 28, textWidth + 16, 18);
+            
+            // Тонкая неоновая рамка для карточки
+            ctx.strokeStyle = "rgba(0, 255, 204, 0.5)";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(centerX - (textWidth / 2) - 8, centerY + 28, textWidth + 16, 18);
+
+            // Выводим сам текст белым цветом чуть ниже флага (флаг у нас по центру, смещаем текст на 41px вниз)
+            ctx.fillStyle = "#ffffff";
+            ctx.fillText(statsText, centerX, centerY + 41);
+
+            ctx.restore();
+        }
+
+
+        // Слухачі подій миші
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        // Підтримка мобільних пристроїв (тачскрін)
+        canvas.addEventListener('touchstart', (e) => {
+            startDrawing(e);
+        });
+        canvas.addEventListener('touchmove', (e) => {
+            // Предотвращаем прокрутку страницы при рисовании
+            e.preventDefault(); 
+            draw(e);
+        });
+
+        canvas.addEventListener('touchend', stopDrawing);
+
+        // Ініціалізація гри
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Перший запуск
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+
+        generatePoints();
+        drawPoints();
+    </script>
+</body>
+</html>

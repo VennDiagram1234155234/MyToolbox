@@ -1,0 +1,1591 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Симулятор Войны Границ</title>
+    <!-- Здесь будет ссылка на CSS или тег <style> -->
+    <style>
+        /* Сброс отступов и центрирование интерфейса по центру экрана */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a1a;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Панель управления (кнопки и статус-бар) */
+        #controls {
+            margin-bottom: 8px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            z-index: 10;
+        }
+
+        /* Общий стиль для кнопок */
+        button {
+            background-color: #333;
+            color: #fff;
+            border: 2px solid #555;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #555;
+            border-color: #888;
+        }
+
+        button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* Выделяющийся стиль для кнопки "Атаковать" */
+        #btn-attack {
+            background-color: #8b0000;
+            border-color: #b22222;
+        }
+
+        #btn-attack:hover:not(:disabled) {
+            background-color: #b22222;
+            border-color: #ff0000;
+        }
+
+        /* Текстовая строка состояния */
+        #status {
+            font-size: 18px;
+            font-weight: bold;
+            min-width: 250px;
+            text-align: center;
+        }
+
+        /* Обёртка для холста (задаёт тень и позиционирование для меток) */
+        #game-container {
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            overflow: hidden;
+            background: #242424;
+        }
+
+        /* Игровой холст */
+        canvas {
+            display: block;
+            cursor: crosshair;
+        }
+
+        /* Текстовые метки стран поверх холста */
+        .hud-label {
+            position: absolute;
+            font-size: 28px;
+            font-weight: 900;
+            opacity: 0.45; /* Збільшуємо видимість */
+            pointer-events: none;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            /* Чорне обведення-тінь гарантує читабельність на білому, чорному та кольоровому фонах */
+            text-shadow: 2px 2px 0px #000, -1px -1px 0px #000, 1px -1px 0px #000, -1px 1px 0px #000;
+        }
+
+
+        #label-left {
+            left: 50px;
+            top: 30px;
+            color: #fff;
+        }
+
+        #label-right {
+            right: 50px;
+            top: 30px;
+            color: #fff;
+        }
+
+        #btn-auto {
+            background-color: #1e3a1e;
+            border-color: #2e5a2e;
+        }
+        #btn-auto:hover:not(:disabled) {
+            background-color: #2e5a2e;
+            border-color: #3e7a3e;
+        }
+        #btn-auto.active {
+            background-color: #cca700;
+            border-color: #eab308;
+            color: #000;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Верхняя панель управления игрой -->
+    <div id="controls">
+        <button id="btn-reset">Сброс / Рисовать</button>
+        <button id="btn-auto" disabled>Запустить симуляцию</button>
+        <button id="btn-speed" style="display: none; ">Скорость: 1x</button>
+        <button id="btn-heatmap">Хитмап: ВЫКЛ</button>
+        <div id="status">Шаг 1: Нарисуйте границу</div>
+        <button id="btn-attack" disabled>Атаковать!</button>
+    </div>
+
+    <!-- Главный контейнер игрового поля -->
+    <div id="game-container">
+        <!-- Фоновые визуальные текстовые метки для стран -->
+        <div id="label-left" class="hud-label">Страна А</div>
+        <div id="label-right" class="hud-label">Страна Б</div>
+        
+        <!-- Холст для отрисовки графики через JavaScript -->
+        <canvas id="gameCanvas" width="1024" height="768"></canvas>
+    </div>
+
+    <!-- Здесь будет ссылка на JS-скрипт -->
+    <script>
+        // Массив для хранения городов и деревень
+        let settlements = [];
+
+        // Конфигурация типов войск
+        const TROOP_TYPES = {
+            INFANTRY: { name: 'Пехота', minW: 50, maxW: 70, minH: 40, maxH: 50, speedY: 4, marchX: 6, pushPower: 5, icon: 'infantry' },
+            TANK:     { name: 'Тяжелый танк', minW: 90, maxW: 110, minH: 55, maxH: 65, speedY: 2, marchX: 3, pushPower: 12, icon: 'tank' },
+            RECON:    { name: 'Разведка', minW: 30, maxW: 40, minH: 25, maxH: 35, speedY: 7, marchX: 10, pushPower: 2, icon: 'recon' }
+        };
+
+        // Функция случайного выбора типа войск (например: 60% пехота, 20% танки, 20% разведка)
+        function getRandomTroopType() {
+            const rand = Math.random();
+            if (rand < 0.6) return TROOP_TYPES.INFANTRY;
+            if (rand < 0.8) return TROOP_TYPES.TANK;
+            return TROOP_TYPES.RECON;
+        }
+
+        // Об'єкт для зберігання унікального візуального стилю країн на поточну гру
+        let countryStyles = {
+            left: { bg: '#1e293b', flagType: 'tricolor', colors: [] },
+            right: { bg: '#3b1e1e', flagType: 'bicolor', colors: [] }
+        };
+
+        // Находим элементы интерфейса и инициализируем контекст рисования
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const btnReset = document.getElementById('btn-reset');
+        const btnAttack = document.getElementById('btn-attack');
+        const statusText = document.getElementById('status');
+        const btnAuto = document.getElementById('btn-auto'); // Ссылка на кнопку автобоя
+        let autoInterval = null;                             // Переменная для хранения таймера
+        const btnSpeed = document.getElementById('btn-speed'); // Посилання на кнопку швидкості
+        let simSpeed = 1;  
+        let reinforcementInterval = null; // Таймер для появления подкреплений
+        
+        const btnHeatmap = document.getElementById('btn-heatmap');
+        const GRID_SIZE = 24; // Размер ячейки хитмапа в пикселях
+        let heatmapGrid = [];
+        let showHeatmap = false;
+
+
+        const WIDTH = canvas.width;
+        const HEIGHT = canvas.height;
+
+        // Состояния игры: 'drawing' (рисуем), 'ready' (готовы к бою), 'battle' (идет бой), 'gameover' (финал)
+        let gameState = 'drawing'; 
+        let isDrawing = false;
+
+        // Массив границы: для каждой Y-координаты от 0 до HEIGHT-1 храним одну X-координату
+        let borderPoints = new Array(HEIGHT).fill(WIDTH / 2);
+        let originalBorderPoints = [];
+
+        // Массивы для хранения прямоугольников войск обеих стран
+        let troopsLeft = [];
+        let troopsRight = [];
+        // Переменные для подсчета потерь в реальном времени (в квадратных пикселях площади)
+        let lossesLeft = 0;
+        let lossesRight = 0;
+
+        // Координата последней точки для сглаживания линии при быстром движении мыши
+        let lastPoint = null;
+
+        // Запуск игры
+        init();
+
+        /**
+         * Инициализация и сброс игры в начальное состояние
+         */
+        function init() {
+            originalBorderPoints = [];
+            // ОБНУЛЯЕМ ПОТЕРИ ПРИ СБРОСЕ
+            
+            lossesLeft = 0;
+            lossesRight = 0;
+            // Создаем пустую сетку хитмапа под размер экрана
+            heatmapGrid = Array.from({ length: Math.ceil(HEIGHT / GRID_SIZE) }, () => new Array(Math.ceil(WIDTH / GRID_SIZE)).fill(0));
+            generateCountryStyles();
+
+            gameState = 'drawing'; isDrawing = false;
+            troopsLeft = []; troopsRight = []; lastPoint = null;
+            // Додайте це всередину функції init()
+            simSpeed = 1;
+            btnSpeed.textContent = "Скорость: 1x";
+            btnSpeed.style.display = "none";
+
+            // Останавливаем автобой, если он был запущен
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+
+            // Добавьте это внутрь функции init()
+            if (reinforcementInterval) {
+                clearInterval(reinforcementInterval);
+                reinforcementInterval = null;
+            }
+
+            btnAuto.classList.remove('active');
+            btnAuto.textContent = "Запустить симуляцию";
+            btnAuto.disabled = true;
+
+            borderPoints.fill(WIDTH / 2);
+            btnAttack.disabled = true;
+            statusText.textContent = "Шаг 1: Нарисуйте границу сверху вниз";
+            statusText.style.color = "#fff";
+
+            // --- ИСПРАВЛЕНО: ГЕНЕРАЦИЯ НАСЕЛЕННЫХ ПУНКТОВ С ЛАТИНСКИМИ НАЗВАНИЯМИ ---
+            settlements = [];
+            const countSettlements = Math.floor(Math.random() * 16) + 15; 
+            
+            // Вспомогательная функция для генерации читаемых латинских названий из слогов
+            function generateLatinName() {
+                const vowels = ['a', 'e', 'i', 'o', 'u', 'y'];
+                const consonants = ['b', 'c', 'd', 'f', 'g', 'h', 'k', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v', 'z', 'th', 'kr', 'st'];
+                let word = "";
+                // Длина слова от 2 до 4 слогов
+                const syllables = Math.floor(Math.random() * 3) + 2; 
+                
+                for (let s = 0; s < syllables; s++) {
+                    word += consonants[Math.floor(Math.random() * consonants.length)];
+                    word += vowels[Math.floor(Math.random() * vowels.length)];
+                }
+                // Делаем первую букву заглавной
+                return word.charAt(0).toUpperCase() + word.slice(1);
+            }
+
+            for (let i = 0; i < countSettlements; i++) {
+                const sX = Math.floor(Math.random() * (WIDTH - 60)) + 30;
+                const sY = Math.floor(Math.random() * (HEIGHT - 60)) + 30;
+                
+                const randType = Math.random();
+                let sType, sSize, sPrefix;
+                
+                // Меняем префиксы типов на латиницу (St. / T. / V.) или оставляем просто названия
+                if (randType < 0.2) {
+                    sType = 'city'; sSize = 6; sPrefix = 'St. '; // Sector / Station / Stronghold
+                } else if (randType < 0.5) {
+                    sType = 'town'; sSize = 4; sPrefix = 'T. ';  // Town / Terminus
+                } else {
+                    sType = 'village'; sSize = 2.5; sPrefix = 'V. '; // Village / Outpost
+                }
+                
+                // Генерируем случайное имя: например, "St. Krado", "T. Fesy", "V. Thamyru"
+                const sLabel = sPrefix + generateLatinName();
+                
+                settlements.push({ x: sX, y: sY, type: sType, size: sSize, label: sLabel });
+            }
+
+
+            draw();
+        }
+
+
+        /**
+         * Основная функция отрисовки всего графического содержимого на Canvas
+         */
+        function draw() {
+            // 1. Заливаем всю левую часть случайным цветом Страны А
+            ctx.fillStyle = countryStyles.left.bg; 
+            ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+            // 2. Отрисовываем полигон правой территории Страны Б по её случайному цвету
+            ctx.fillStyle = countryStyles.right.bg; 
+            ctx.beginPath();
+            ctx.moveTo(borderPoints[0], 0);
+            for (let y = 1; y < HEIGHT; y++) {
+                ctx.lineTo(borderPoints[y], y);
+            }
+            ctx.lineTo(WIDTH, HEIGHT);
+            ctx.lineTo(WIDTH, 0);
+            ctx.closePath();
+            ctx.fill();
+
+            // --- ДИНАМИЧЕСКИЙ ПЛАВНЫЙ ХИТМАП (под войсками и городами) ---
+            // --- ДИНАМИЧЕСКИЙ ТОП-ХИТМАП С ОГРАНИЧЕНИЕМ КРАСНЫХ ТОЧЕК (под войсками и городами) ---
+            // --- ИДЕАЛЬНО ПЛАВНЫЙ РАДИАЛЬНЫЙ ХИТМАП С ЧЕРНЫМИ ПЯТНАМИ (под войсками и городами) ---
+            if (showHeatmap) {
+                ctx.save();
+                
+                // 1. Собираем все активные точки боев в один массив
+                let allIntensities = [];
+                for (let r = 0; r < heatmapGrid.length; r++) {
+                    for (let c = 0; c < heatmapGrid[r].length; c++) {
+                        if (heatmapGrid[r][c] > 0) {
+                            allIntensities.push(heatmapGrid[r][c]);
+                        }
+                    }
+                }
+                
+                // 2. Сортируем массив по убыванию
+                allIntensities.sort((a, b) => b - a);
+                
+                // Настройка количества топ-точек
+                // Теперь у нас два высших порога: для черных и для красных точек
+                let maxBlackPoints = 5;   // Сколько САМЫХ жестких эпицентров станут черными
+                let maxRedPoints = 15;   // Сколько точек после них будут гореть красными
+                
+                let blackThreshold = allIntensities.length > 0 
+                    ? Math.max(25, allIntensities[Math.min(allIntensities.length - 1, maxBlackPoints - 1)]) 
+                    : 25;
+                    
+                let redThreshold = allIntensities.length > 0 
+                    ? Math.max(10, allIntensities[Math.min(allIntensities.length - 1, maxBlackPoints + maxRedPoints - 1)]) 
+                    : 10;
+
+                // 3. Отрисовка идеально круглых сглаженных пятен
+                for (let r = 0; r < heatmapGrid.length; r++) {
+                    for (let c = 0; c < heatmapGrid[r].length; c++) {
+                        let intensity = heatmapGrid[r][c];
+                        
+                        if (intensity > 0) {
+                            let x = c * GRID_SIZE + GRID_SIZE / 2;
+                            let y = r * GRID_SIZE + GRID_SIZE / 2;
+                            let radius = GRID_SIZE * 1.8; 
+
+                            let grad = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                            let centerColor;
+                            let middleColor = 'rgba(0, 0, 0, 0)'; // По умолчанию размывается в пустоту
+
+                            // Расширенная таблица интенсивности: Черный -> Красный -> Оранжевый -> Желтый -> Зеленый
+                            if (intensity >= blackThreshold) {
+                                // АБСОЛЮТНЫЙ ПИК: угольно-черный центр с переходом в сочный красный ореол
+                                centerColor = 'rgba(15, 15, 15, 0.9)'; 
+                                middleColor = 'rgba(185, 28, 28, 0.4)'; // Красный контур, чтобы точка выделялась на темном фоне
+                            } else if (intensity >= redThreshold) {
+                                // Топ-бой: плотный красный
+                                centerColor = 'rgba(220, 38, 38, 0.75)'; 
+                            } else {
+                                // Относительный расчет для остальных цветов ниже красного порога
+                                let factor = intensity / redThreshold;
+                                
+                                if (factor < 0.3) {
+                                    // Слабый бой: мягкий зеленый
+                                    let alpha = (factor / 0.3) * 0.45;
+                                    centerColor = `rgba(34, 197, 94, ${alpha})`; 
+                                } else if (factor < 0.65) {
+                                    // Средний бой: теплый желтый
+                                    centerColor = 'rgba(234, 179, 8, 0.55)'; 
+                                } else {
+                                    // Сильный бой: насыщенный оранжевый
+                                    centerColor = 'rgba(249, 115, 22, 0.65)'; 
+                                }
+                            }
+
+                            // Плавное радиальное затухание цвета от центра к краям
+                            grad.addColorStop(0, centerColor);       
+                            if (intensity >= blackThreshold) {
+                                grad.addColorStop(0.4, middleColor); // Добавляем контур только для выжженных черных точек
+                            }
+                            grad.addColorStop(1, 'rgba(0, 0, 0, 0)'); 
+
+                            ctx.fillStyle = grad;
+                            ctx.beginPath();
+                            ctx.arc(x, y, radius, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+                }
+                
+                ctx.restore();
+            }
+
+
+
+
+            // Отрисовка изначальной границы с обводкой для видимости на любом фоне
+            if (originalBorderPoints.length > 0) {
+                ctx.save(); // Сохраняем настройки контекста
+                
+                // Настраиваем пунктир: 8 пикселей линия, 8 пикселей пропуск
+                ctx.setLineDash([8, 8]); 
+                ctx.lineWidth = 3; // Делаем линию чуть толще
+
+                // 1. Сначала рисуем черную подложку (размытую тень), чтобы линию было видно на светлых фонах
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.6)';
+                ctx.beginPath();
+                ctx.moveTo(originalBorderPoints[0], 0);
+                for (let y = 1; y < HEIGHT; y++) {
+                ctx.lineTo(originalBorderPoints[y], y);
+                }
+                ctx.stroke();
+
+                // 2. Поверх рисуем яркую неоново-желтую пунктирную линию
+                ctx.strokeStyle = '#fffb00'; 
+                ctx.lineWidth = 2; // Чуть тоньше подложки, чтобы получился эффект контура
+                ctx.beginPath();
+                ctx.moveTo(originalBorderPoints[0], 0);
+                for (let y = 1; y < HEIGHT; y++) {
+                ctx.lineTo(originalBorderPoints[y], y);
+                }
+                ctx.stroke();
+
+                ctx.restore(); // Полностью сбрасываем пунктир и стили для остальных элементов
+            }
+
+
+            // 3. Малюємо прямокутники військ Страни А із прапором
+            troopsLeft.forEach(t => {
+                // ИСПРАВЛЕНО: добавили шестым параметром true
+                drawFlagInsideRect(t.x, t.y, t.w, t.h, t, true); 
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(t.x, t.y, t.w, t.h);
+            });
+
+            // 4. Малюємо прямокутники військ Страни Б із прапором
+            troopsRight.forEach(t => {
+                // ИСПРАВЛЕНО: добавили шестым параметром false
+                drawFlagInsideRect(t.x, t.y, t.w, t.h, t, false); 
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(t.x, t.y, t.w, t.h);
+            });
+
+            // --- ОТРИСОВКА НАСЕЛЕННЫХ ПУНКТОВ ---
+            settlements.forEach(s => {
+                // Определяем, на чьей территории находится точка в данный момент
+                // Берем текущую координату золотой линии для высоты города
+                const borderXatY = borderPoints[s.y];
+                
+                let controlColor, textColor;
+                if (s.x < borderXatY) {
+                    // Если левее линии — контролирует Страна А (желто-черный флаг)
+                    controlColor = countryStyles.left.bg;
+                    textColor = "#fff";
+                } else {
+                    // Если правее — контролирует Страна Б (зеленый флаг)
+                    controlColor = countryStyles.right.bg;
+                    textColor = "#fff";
+                }
+
+                // 1. Рисуем черную контрастную подложку-кружок
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.size + 2.5, 0, Math.PI * 2);
+                ctx.fillStyle = "#000";
+                ctx.fill();
+
+                // 2. Рисуем сам кружок города, окрашенный в цвет контролирующей страны
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+                ctx.fillStyle = controlColor;
+                ctx.fill();
+                ctx.lineWidth = 1.5;
+                ctx.strokeStyle = "#fff";
+                ctx.stroke();
+
+                // 3. Дополнительная иконка для крупных городов (внутренняя точка)
+                if (s.type === 'city') {
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, s.size / 2, 0, Math.PI * 2);
+                    ctx.fillStyle = "#000";
+                    ctx.fill();
+                }
+
+                // 4. Текстовое название населенного пункта (аккуратный мелкий шрифт под кружком)
+                ctx.save();
+                ctx.font = "900 10px 'Segoe UI', Tahoma, sans-serif";
+                ctx.textAlign = "center";
+                
+                // Тень для текста, чтобы читалcя на любом фоне
+                ctx.shadowBlur = 4;
+                ctx.shadowColor = "#000";
+                ctx.fillStyle = textColor;
+                ctx.fillText(s.label, s.x, s.y + s.size + 12);
+                ctx.restore();
+            });
+
+
+
+            // 5. Отрисовываем саму линию границы (Золотое свечение)
+            ctx.beginPath();
+            ctx.strokeStyle = '#eab308'; 
+            ctx.lineWidth = 4;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#eab308';
+            ctx.moveTo(borderPoints[0], 0);
+            for (let y = 1; y < HEIGHT; y++) {
+                ctx.lineTo(borderPoints[y], y);
+            }
+            ctx.stroke();
+            
+            // Сбрасываем тени, чтобы они не размывали прямоугольники при следующем кадре
+            ctx.shadowBlur = 0;
+        }
+
+        /**
+         * Получение точных координат курсора мыши или касания тач-скрина
+         */
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: clientX - rect.left,
+                y: Math.max(0, Math.min(HEIGHT - 1, Math.floor(clientY - rect.top)))
+            };
+        }
+
+        /**
+         * Запись координаты X для конкретной горизонтали Y с ограничением по краям экрана
+         */
+        function updateBorderAtPoint(x, y) {
+            const targetX = Math.max(50, Math.min(WIDTH - 50, x));
+            borderPoints[y] = targetX;
+            
+            // Дополнительно сглаживаем соседние пиксели по вертикали, 
+            // чтобы при резких горизонтальных поворотах не было пустых разрывов
+            if (y > 0) borderPoints[y - 1] = (borderPoints[y - 1] + targetX) / 2;
+            if (y < HEIGHT - 1) borderPoints[y + 1] = (borderPoints[y + 1] + targetX) / 2;
+        }
+
+        // --- ОБРАБОТЧИКИ СОБЫТИЙ ДЛЯ РИСОВАНИЯ ---
+
+        function handleStart(e) {
+            if (gameState !== 'drawing') return;
+            isDrawing = true;
+            lastPoint = getMousePos(e);
+            updateBorderAtPoint(lastPoint.x, lastPoint.y);
+            draw();
+        }
+
+        function handleMove(e) {
+            if (!isDrawing || gameState !== 'drawing') return;
+            if (e.touches) e.preventDefault();
+
+            const currentPoint = getMousePos(e);
+            if (!lastPoint) return;
+
+            const startY = Math.min(lastPoint.y, currentPoint.y);
+            const endY = Math.max(lastPoint.y, currentPoint.y);
+            const distY = endY - startY;
+
+            // Если мышь движется почти горизонтально (рисуем полку круга)
+            if (distY === 0) {
+                updateBorderAtPoint(currentPoint.x, currentPoint.y);
+            } else {
+                // Направленная интерполяция: плавно соединяем точки, не давая срезать углы
+                for (let y = startY; y <= endY; y++) {
+                const t = (y - lastPoint.y) / (currentPoint.y - lastPoint.y);
+                const x = lastPoint.x + t * (currentPoint.x - lastPoint.x);
+                updateBorderAtPoint(x, y);
+                }
+            }
+
+            // СИЛОВОЕ СГЛАЖИВАНИЕ СОСЕДНИХ ЗОН (Убирает «лесенки» при попытке закруглить линию)
+            const scanRadius = 8; // Чем выше число, тем мягче и круглее будут выходить петли
+            for (let pass = 0; pass < 2; pass++) {
+                let tempPoints = [...borderPoints];
+                const updateStartY = Math.max(2, startY - scanRadius);
+                const updateEndY = Math.min(HEIGHT - 3, endY + scanRadius);
+                
+                for (let y = updateStartY; y <= updateEndY; y++) {
+                tempPoints[y] = (borderPoints[y - 2] + borderPoints[y - 1] + borderPoints[y] + borderPoints[y + 1] + borderPoints[y + 2]) / 5;
+                }
+                borderPoints = tempPoints;
+            }
+
+            lastPoint = currentPoint;
+            draw();
+            }
+
+
+
+        function handleEnd() { 
+            if (isDrawing && gameState === 'drawing') { 
+                isDrawing = false; 
+                generateTroops(); 
+                gameState = 'ready'; 
+                btnAttack.disabled = false; 
+                btnAuto.disabled = false; // АКТИВИРУЕМ КНОПКУ АВТОБОЯ
+                // СОХРАНЯЕМ КОПИЮ ЛИНИИ:
+                originalBorderPoints = [...borderPoints]; 
+                statusText.textContent = "Войска созданы! Нажимайте Атаковать или Запустите симуляцию."; 
+            } 
+        }
+
+
+        // Привязка событий мыши
+        canvas.addEventListener('mousedown', handleStart);
+        canvas.addEventListener('mousemove', handleMove);
+        window.addEventListener('mouseup', handleEnd);
+
+        // Привязка событий тач-скрина (для мобильных)
+        canvas.addEventListener('touchstart', handleStart);
+        canvas.addEventListener('touchmove', handleMove, { passive: false });
+        canvas.addEventListener('touchend', handleEnd);
+
+        /**
+         * Случайная генерация непересекающихся прямоугольников войск по обе стороны границы
+         */
+        function generateTroops() {
+            const countLeft = Math.floor(Math.random() * 4) + 3;  // Від 3 до 6 батальйонів
+            const countRight = Math.floor(Math.random() * 4) + 3;
+
+            // Функція перевірки перетину прямокутників, щоб вони не злипалися по вертикалі
+            const overlaps = (rect, list) => list.some(r => !(
+                rect.x + rect.w < r.x || 
+                rect.x > r.x + r.w || 
+                rect.y + rect.h < r.y || 
+                rect.y > r.y + r.h
+            ));
+
+            // Генерація для лівої сторони (Сині) — ставимо впритул ліворуч від кордону
+            for (let i = 0; i < countLeft; i++) {
+                let attempts = 0;
+                while (attempts < 100) {
+                    const tType = getRandomTroopType();
+                    const h = Math.floor(Math.random() * (tType.maxH - tType.minH)) + tType.minH;
+                    const w = Math.floor(Math.random() * (tType.maxW - tType.minW)) + tType.minW;
+                    const y = Math.floor(Math.random() * (HEIGHT - h - 20)) + 10;
+
+                    const borderX = borderPoints[Math.floor(y + h / 2)];
+                    const x = borderX - w;
+                    
+                    // Добавляем новые параметры в объект
+                    const newRect = { 
+                        x, y, w, h, 
+                        type: tType.icon,
+                        troopSpeedY: tType.speedY,
+                        troopMarchSpeed: tType.marchX,
+                        pushPower: tType.pushPower
+                    };
+                    if (!overlaps(newRect, troopsLeft) && x > 10) {
+                        troopsLeft.push(newRect);
+                        break;
+                    }
+                    attempts++;
+                }
+            }
+
+            // Генерація для правої сторони (Червоні) — ставимо впритул праворуч від кордону
+            for (let i = 0; i < countRight; i++) {
+                let attempts = 0;
+                while (attempts < 100) {
+                    const tType = getRandomTroopType();
+                    const h = Math.floor(Math.random() * (tType.maxH - tType.minH)) + tType.minH;
+                    const w = Math.floor(Math.random() * (tType.maxW - tType.minW)) + tType.minW;
+                    const y = Math.floor(Math.random() * (HEIGHT - h - 20)) + 10;
+
+                    const borderX = borderPoints[Math.floor(y + h / 2)];
+                    const x = borderX - w;
+                    
+                    // Добавляем новые параметры в объект
+                    const newRect = { 
+                        x, y, w, h, 
+                        type: tType.icon,
+                        troopSpeedY: tType.speedY,
+                        troopMarchSpeed: tType.marchX,
+                        pushPower: tType.pushPower
+                    };
+                    if (!overlaps(newRect, troopsRight) && x < WIDTH - w - 10) {
+                        troopsRight.push(newRect);
+                        break;
+                    }
+                    attempts++;
+                }
+            }
+            draw();
+        }
+
+
+        /**
+         * Проверка: перекрывает ли список войск конкретную Y-координату строки
+         */
+        function isYCoveredByTroops(y, troopsList) {
+            return troopsList.some(t => y >= t.y && y <= (t.y + t.h));
+        }
+
+        // --- ЛОГИКА КНОПКИ АТАКОВАТЬ ---
+        btnAttack.addEventListener('click', () => {
+            if (gameState !== 'ready' && gameState !== 'battle') return;
+            gameState = 'battle';
+
+            if (typeof startReinforcements === 'function') {
+                startReinforcements();
+            }
+
+            const combatShiftSpeed = 5; 
+            const freeShiftSpeed = 2;   
+            const troopMoveYSpeed = 4;  
+            const marchSpeed = 6;       
+            const padding = 8; // Безопасный отступ от золотой линии
+
+            // 1. Сбрасываем флаги боя перед проверкой
+            troopsLeft.forEach(t => t.underAttack = false);
+            troopsRight.forEach(t => t.underAttack = false);
+
+            // 2. Рассчитываем движение для участков активного столкновения армий
+            // Бой засчитывается, если отряды просто пересекаются по вертикали (Y) и находятся близко к фронту
+            troopsLeft.forEach(l => {
+                troopsRight.forEach(r => {
+                    const isCollidingY = !(l.y + l.h < r.y || l.y > r.y + r.h);
+                    
+                    // Если они на одной высоте Y и горизонтальное расстояние между ними небольшое — они дерутся
+                    const distanceX = r.x - (l.x + l.w);
+                    if (isCollidingY && distanceX < 40) {
+                        l.underAttack = true;
+                        r.underAttack = true;
+
+                        const overlapYStart = Math.max(l.y, r.y);
+                        const overlapYEnd = Math.min(l.y + l.h, r.y + r.h);
+
+                        // Двигаем границу в зависимости от того, у кого больше pushPower (сила продавливания)
+                        // (Если силы равны, сравниваем ширину отрядов, как и было)
+                        // (Если силы равны, сравниваем ширину отрядов, как и было)
+                        for (let y = overlapYStart; y <= overlapYEnd; y++) {
+
+                            if (l.pushPower !== r.pushPower) {
+                                if (l.pushPower > r.pushPower) borderPoints[y] += 4;
+                                else borderPoints[y] -= 4;
+                            } else {
+                                if (l.w > r.w) borderPoints[y] += 3;
+                                else if (r.w > l.w) borderPoints[y] -= 3;
+                            }
+
+
+                        }
+
+                    }
+                });
+            });
+
+            // 3. Для свободных от боя участков двигаем границу
+            for (let y = 0; y < HEIGHT; y++) {
+                // Проверяем, есть ли на этой высоте отряды, которые уже подошли к фронту
+                const hasLeft = troopsLeft.some(t => y >= t.y && y <= t.y + t.h && t.x >= borderPoints[y] - t.w - 30);
+                const hasRight = troopsRight.some(t => y >= t.y && y <= t.y + t.h && t.x <= borderPoints[y] + 30);
+
+                if (hasLeft && !hasRight) {
+                    borderPoints[y] += freeShiftSpeed;
+                } else if (!hasLeft && hasRight) {
+                    borderPoints[y] -= freeShiftSpeed;
+                }
+            }
+
+            // 4. ТАКТИЧЕСКИЙ МАНЕВР: Рух по вертикали на помощь
+            troopsLeft.forEach(l => {
+                if (!l.underAttack && troopsRight.length > 0) {
+                    let closestEnemy = troopsRight;
+                    let minDist = HEIGHT * 2;
+                    troopsRight.forEach(r => {
+                        const dist = Math.abs((l.y + l.h/2) - (r.y + r.h/2));
+                        if (dist < minDist) { minDist = dist; closestEnemy = r; }
+                    });
+                    if (l.y + l.h/2 < closestEnemy.y + closestEnemy.h/2) l.y += l.troopSpeedY;
+                    else l.y -= l.troopSpeedY;
+                }
+            });
+
+            troopsRight.forEach(r => {
+                if (!r.underAttack && troopsLeft.length > 0) {
+                    let closestEnemy = troopsLeft;
+                    let minDist = HEIGHT * 2;
+                    troopsLeft.forEach(l => {
+                        const dist = Math.abs((r.y + r.h/2) - (l.y + l.h/2));
+                        if (dist < minDist) { minDist = dist; closestEnemy = l; }
+                    });
+                    if (r.y + r.h/2 < closestEnemy.y + closestEnemy.h/2) r.y += r.troopSpeedY;
+                    else r.y -= r.troopSpeedY;
+                }
+            });
+
+            // 5. ДВИЖЕНИЕ ПОДКРЕПЛЕНИЙ С КРАЕВ (Марш к фронту)
+            troopsLeft.forEach(t => {
+                let minBorderX = WIDTH;
+                for (let y = Math.floor(t.y); y < Math.floor(t.y + t.h); y++) {
+                    if (y >= 0 && y < HEIGHT && borderPoints[y] < minBorderX) minBorderX = borderPoints[y];
+                }
+                const expectedX = minBorderX - t.w - padding;
+                if (t.x < expectedX - 5) {
+                    t.x += t.troopMarchSpeed;
+                    if (t.targetY !== undefined) {
+                        if (t.y < t.targetY) t.y += 2;
+                        else if (t.y > t.targetY) t.y -= 2;
+                    }
+                }
+            });
+
+            troopsRight.forEach(r => {
+                let maxBorderX = 0;
+                for (let y = Math.floor(r.y); y < Math.floor(r.y + r.h); y++) {
+                    if (y >= 0 && y < HEIGHT && borderPoints[y] > maxBorderX) maxBorderX = borderPoints[y];
+                }
+                const expectedX = maxBorderX + padding;
+                if (r.x > expectedX + 5) {
+                    r.x -= r.troopMarchSpeed;
+                    if (r.targetY !== undefined) {
+                        if (r.y < r.targetY) r.y += 2;
+                        else if (r.y > r.targetY) r.y -= 2;
+                    }
+                }
+            });
+
+            // Удерживаем координаты Y в рамках экрана
+            [...troopsLeft, ...troopsRight].forEach(t => {
+                if (t.y < 5) t.y = 5;
+                if (t.y + t.h > HEIGHT - 5) t.y = HEIGHT - t.h - 5;
+            });
+
+            // 6. ПЛАВНОСТЬ: Сглаживаем углы границы
+            for (let pass = 0; pass < 3; pass++) {
+                let smoothed = [...borderPoints];
+                for (let y = 2; y < HEIGHT - 2; y++) {
+                    smoothed[y] = (borderPoints[y - 2] + borderPoints[y - 1] + borderPoints[y] + borderPoints[y + 1] + borderPoints[y + 2]) / 5;
+                }
+                borderPoints = smoothed;
+            }
+
+            // 7. НАНЕСЕНИЕ УРОНА: Уменьшаем ширину дерущихся отрядов с учетом окружения и удара в тыл
+        
+            // --- РАСЧЕТ ДЛЯ СТРАНЫ А (СИНИЕ) ---
+            troopsLeft.forEach(t => {
+                if (t.underAttack) {
+                    let multiplier = 1.0;
+                    let isFlanked = false;    // Зажат с двух сторон (сверху и снизу)
+                    let isBackstabbed = false; // Получил удар в тыл (враг зашел справа, а боец развернут влево, либо обойден с тыла)
+
+                    // Ищем всех врагов (красных), которые дерутся именно с этим отрядом 't'
+                    let attackers = troopsRight.filter(r => {
+                        const isCollidingY = !(t.y + t.h < r.y || t.y > r.y + r.h);
+                        const distanceX = r.x - (t.x + t.w);
+                        return isCollidingY && distanceX < 40;
+                    });
+
+                    if (attackers.length >= 2) {
+                        // Проверяем окружение: есть ли враг выше центра нашего отряда И враг ниже центра нашего отряда
+                        let myCenterY = t.y + t.h / 2;
+                        let enemyAbove = attackers.some(r => (r.y + r.h / 2) < myCenterY - 10);
+                        let enemyBelow = attackers.some(r => (r.y + r.h / 2) > myCenterY + 10);
+                        if (enemyAbove && enemyBelow) {
+                            isFlanked = true;
+                        }
+                    }
+
+                    // Проверяем удар в тыл: Синие наступают слева направо. Если враг оказался ЛЕВЕЕ, чем передняя линия синего отряда, он бьет в тыл
+                    isBackstabbed = attackers.some(r => r.x < t.x + 10);
+
+                    // Выставляем коэффициенты урона
+                    if (isFlanked && isBackstabbed) multiplier = 3.0; // И в окружении, и в тыл
+                    else if (isBackstabbed) multiplier = 2.5;         // Чистый удар в спину
+                    else if (isFlanked) multiplier = 2.0;             // Зажали сверху и снизу
+
+                    // Урон для всех типов войск теперь рассчитывается одинаково (множитель удален отсюда)
+                    const damage = (Math.random() * 4 + 2) * multiplier;
+                    const actualDamage = Math.min(damage, t.w);
+
+                    // Определяем коэффициент веса потерь для панели статистики
+                    let lossWeight = 1.0; 
+                    if (t.type === 'tank') lossWeight = 0.25;  // Танки дают в 4 раза меньше очков в общие потери
+                    if (t.type === 'recon') lossWeight = 0.5;   // Разведка дает в 2 раза меньше очков в общие потери
+
+                    // Применяем коэффициент ТОЛЬКО к итоговой цифре потерь
+                    lossesLeft += actualDamage * t.h * lossWeight;
+                    t.w -= actualDamage;
+
+
+                    // Нагреваем хитмап пропорционально нанесенному урону строго по высоте худеющего отряда
+                    if (actualDamage > 0) {
+                        for (let y = Math.floor(t.y); y <= Math.floor(t.y + t.h); y++) {
+                            if (y >= 0 && y < borderPoints.length) {
+                                let currentX = borderPoints[y]; 
+                                let gx = Math.floor(currentX / GRID_SIZE);
+                                let gy = Math.floor(y / GRID_SIZE);
+
+                                if (gy >= 0 && gy < heatmapGrid.length && gx >= 0 && gx < heatmapGrid[gy].length) {
+                                    heatmapGrid[gy][gx] += actualDamage * 0.4; 
+                                }
+                            }
+                        }
+                    }
+
+                }
+            });
+
+            // --- РАСЧЕТ ДЛЯ СТРАНЫ Б (КРАСНЫЕ) ---
+            troopsRight.forEach(t => {
+                if (t.underAttack) {
+                    let multiplier = 1.0;
+                    let isFlanked = false;
+                    let isBackstabbed = false;
+
+                    // Ищем всех врагов (синих), которые дерутся с этим отрядом 't'
+                    let attackers = troopsLeft.filter(l => {
+                        const isCollidingY = !(l.y + l.h < t.y || l.y > t.y + t.h);
+                        const distanceX = t.x - (l.x + l.w);
+                        return isCollidingY && distanceX < 40;
+                    });
+
+                    if (attackers.length >= 2) {
+                        // Проверяем окружение по вертикали (сверху и снизу)
+                        let myCenterY = t.y + t.h / 2;
+                        let enemyAbove = attackers.some(l => (l.y + l.h / 2) < myCenterY - 10);
+                        let enemyBelow = attackers.some(l => (l.y + l.h / 2) > myCenterY + 10);
+                        if (enemyAbove && enemyBelow) {
+                            isFlanked = true;
+                        }
+                    }
+
+                    // Проверяем удар в тыл: Красные наступают справа налево. Если синий враг оказался ПРАВЕЕ правого края красного отряда, это удар в тыл
+                    isBackstabbed = attackers.some(l => (l.x + l.w) > (t.x + t.w - 10));
+
+                    // Выставляем коэффициенты урона
+                    if (isFlanked && isBackstabbed) multiplier = 3.0;
+                    else if (isBackstabbed) multiplier = 2.5;
+                    else if (isFlanked) multiplier = 2.0;
+
+                    // Урон для всех типов войск теперь рассчитывается одинаково (множитель удален отсюда)
+                    const damage = (Math.random() * 4 + 2) * multiplier;
+                    const actualDamage = Math.min(damage, t.w);
+
+                    // Определяем коэффициент веса потерь для панели статистики
+                    let lossWeight = 1.0; 
+                    if (t.type === 'tank') lossWeight = 0.25;  
+                    if (t.type === 'recon') lossWeight = 0.5;   
+
+                    // Применяем коэффициент ТОЛЬКО к итоговой цифре потерь
+                    lossesRight += actualDamage * t.h * lossWeight;
+                    t.w -= actualDamage;
+
+
+                    // Нагреваем хитмап пропорционально нанесенному урону строго по высоте худеющего отряда
+                    if (actualDamage > 0) {
+                        for (let y = Math.floor(t.y); y <= Math.floor(t.y + t.h); y++) {
+                            if (y >= 0 && y < borderPoints.length) {
+                                let currentX = borderPoints[y]; 
+                                let gx = Math.floor(currentX / GRID_SIZE);
+                                let gy = Math.floor(y / GRID_SIZE);
+
+                                if (gy >= 0 && gy < heatmapGrid.length && gx >= 0 && gx < heatmapGrid[gy].length) {
+                                    heatmapGrid[gy][gx] += actualDamage * 0.4; 
+                                }
+                            }
+                        }
+                    }
+
+
+                }
+            });
+
+
+            // Удаляем уничтоженные войска
+            troopsLeft = troopsLeft.filter(t => t.w > 5);
+            troopsRight = troopsRight.filter(t => t.w > 5);
+
+            // 8. КОНЕЧНАЯ ПРИВЯЗКА К ЛИНИИ С ЗАЗОРОМ (По новой сглаженной кривой)
+            troopsLeft.forEach(t => {
+                let minBorderX = WIDTH;
+                for (let y = Math.floor(t.y); y < Math.floor(t.y + t.h); y++) {
+                    if (y >= 0 && y < HEIGHT && borderPoints[y] < minBorderX) minBorderX = borderPoints[y];
+                }
+                const expectedX = minBorderX - t.w - padding;
+                if (t.x >= expectedX - 12) {
+                    t.x = expectedX;
+                }
+            });
+
+            troopsRight.forEach(r => {
+                let maxBorderX = 0;
+                for (let y = Math.floor(r.y); y < Math.floor(r.y + r.h); y++) {
+                    if (y >= 0 && y < HEIGHT && borderPoints[y] > maxBorderX) maxBorderX = borderPoints[y];
+                }
+                const expectedX = maxBorderX + padding;
+                if (r.x <= expectedX + 12) {
+                    r.x = expectedX;
+                }
+
+                // Жесткая коллизия между отрядами лицом к лицу
+                troopsLeft.forEach(l => {
+                    const isCollidingY = !(l.y + l.h < r.y || l.y > r.y + r.h);
+                    if (isCollidingY) {
+                        if (r.x < l.x + l.w + padding) {
+                            r.x = l.x + l.w + padding;
+                            const overlapYStart = Math.max(l.y, r.y);
+                            const overlapYEnd = Math.min(l.y + l.h, r.y + r.h);
+                            for (let y = overlapYStart; y <= overlapYEnd; y++) {
+                                borderPoints[y] = r.x - padding / 2;
+                            }
+                        }
+                    }
+                });
+            });
+
+            // Фиксируем границы экрана
+            for (let y = 0; y < HEIGHT; y++) {
+                borderPoints[y] = Math.max(0, Math.min(WIDTH, borderPoints[y]));
+            }
+            
+            // ВКЛЮЧАЄМО КОЛІЗІЮ: Розштовхуємо прямокутники синіх і червоних окремо
+            resolveTroopCollisions(troopsLeft, true);
+            resolveTroopCollisions(troopsRight, false);
+            
+            // Обновляем счетчик потерь на панели (округляем до целых для красоты)
+            if (gameState === 'battle') {
+            statusText.textContent = `Потери А: ${Math.floor(lossesLeft)} | Потери Б: ${Math.floor(lossesRight)}`;
+            statusText.style.color = "#fff";
+            }
+
+            draw();
+            checkVictory();
+        });
+
+        /**
+         * Проверка условий победы по состоянию границы и остатку армий
+         */
+        function checkVictory() {
+            let leftEdgeCount = 0, rightEdgeCount = 0;
+            for (let y = 0; y < HEIGHT; y++) { 
+                if (borderPoints[y] <= 0) leftEdgeCount++; 
+                if (borderPoints[y] >= WIDTH) rightEdgeCount++; 
+            }
+            
+            if (rightEdgeCount > HEIGHT * 0.95 || (troopsRight.length === 0 && troopsLeft.length > 0)) {
+                gameState = 'gameover'; 
+                if (reinforcementInterval) {
+                    clearInterval(reinforcementInterval);
+                    reinforcementInterval = null;
+                }
+                btnAttack.disabled = true; 
+                // Добавлена статистика потерь в конец строки
+                statusText.textContent = `ПОБЕДА СТРАНЫ А! 🎉 (Потери А: ${Math.floor(lossesLeft)} | Б: ${Math.floor(lossesRight)})`; 
+                statusText.style.color = "#4a90e2";
+                
+            } else if (leftEdgeCount > HEIGHT * 0.95 || (troopsLeft.length === 0 && troopsRight.length > 0)) {
+                gameState = 'gameover'; 
+                if (reinforcementInterval) {
+                    clearInterval(reinforcementInterval);
+                    reinforcementInterval = null;
+                }
+                btnAttack.disabled = true; 
+                // Добавлена статистика потерь в конец строки
+                statusText.textContent = `ПОБЕДА СТРАНЫ Б! 🎉 (Потери А: ${Math.floor(lossesLeft)} | Б: ${Math.floor(lossesRight)})`; 
+                statusText.style.color = "#e24a4a";
+                
+            } else if (troopsLeft.length === 0 && troopsRight.length === 0) {
+                gameState = 'gameover'; 
+                if (reinforcementInterval) {
+                    clearInterval(reinforcementInterval);
+                    reinforcementInterval = null;
+                }
+                btnAttack.disabled = true; 
+                statusText.textContent = `НИЧЬЯ! (Потери А: ${Math.floor(lossesLeft)} | Б: ${Math.floor(lossesRight)})`; 
+                statusText.style.color = "#eab308";
+            }
+
+            if (gameState === 'gameover' && autoInterval) {
+                btnSpeed.style.display = "none";
+                clearInterval(autoInterval);
+                autoInterval = null;
+                btnAuto.disabled = true;
+                btnAuto.classList.remove('active');
+            }
+        }
+
+
+        btnReset.addEventListener('click', init);
+        // Допоміжна функція для запуску/перезапуску таймера з урахуванням швидкості
+        
+        function startAutoInterval() {
+            if (autoInterval) clearInterval(autoInterval);
+            
+            // Базовий крок — 100 мс. Ділимо на simSpeed: 
+            // При 2х інтервал стане 50 мс (швидше), при 0.5х — 200 мс (повільніше)
+            const intervalTime = 100 / simSpeed; 
+            
+            autoInterval = setInterval(() => {
+                btnAttack.click();
+            }, intervalTime);
+        }
+
+        btnAuto.addEventListener('click', () => {
+            if (gameState === 'gameover' || gameState === 'drawing') return;
+
+            if (autoInterval) {
+                // --- ПАУЗА ---
+                clearInterval(autoInterval);
+                autoInterval = null;
+                
+                // ЗУПИНЯЄМО підкріплення на паузі, щоб вони не засмічували екран
+                if (reinforcementInterval) {
+                    clearInterval(reinforcementInterval);
+                    reinforcementInterval = null;
+                }
+
+                btnAuto.classList.remove('active');
+                btnAuto.textContent = "Запустить симуляцию";
+                btnSpeed.style.display = "none"; 
+            } else {
+                // --- СТАРТ ---
+                btnAuto.classList.add('active');
+                btnAuto.textContent = "Поставить на паузу";
+                btnSpeed.style.display = "inline-block"; 
+                
+                startAutoInterval();
+                
+                // ЗНОВУ ЗАПУСКАЄМО підкріплення при знятті з паузи
+                if (typeof startReinforcements === 'function') {
+                    startReinforcements();
+                }
+            }
+        });
+
+        btnSpeed.addEventListener('click', () => {
+            // Циклічно міняємо швидкість: 1x -> 2x -> 3x -> 0.5x -> 1x
+            if (simSpeed === 1) {
+                simSpeed = 2;
+            } else if (simSpeed === 2) {
+                simSpeed = 3;
+            } else if (simSpeed === 3) {
+                simSpeed = 0.5;
+            } else {
+                simSpeed = 1;
+            }
+            
+            // Оновлюємо текст на кнопці
+            btnSpeed.textContent = `Скорость: ${simSpeed}x`;
+            
+            // Якщо симуляція активна, миттєво перезапускаємо таймер з новою швидкістю
+            if (autoInterval) {
+                startAutoInterval();
+            }
+        });
+
+        function startReinforcements() {
+            // Якщо таймер уже працює, нічого не робимо, щоб не дублювати його
+            if (reinforcementInterval) return;
+
+            reinforcementInterval = setInterval(() => {
+                // Выбираем случайное количество отрядов для левой и правой стороны (минимум 1)
+                const countL = Math.floor(Math.random() * 10) + 1; // Например, от 1 до 3
+                const countR = Math.floor(Math.random() * 10) + 1;
+
+                // 1. Создаем левое подкрепление (Синие)
+                for (let i = 0; i < countL; i++) {
+                    // При создании левого подкрепления (Синие)
+                    const tType = getRandomTroopType();
+                    const hL = Math.floor(Math.random() * (tType.maxH - tType.minH)) + tType.minH;
+                    const wL = Math.floor(Math.random() * (tType.maxW - tType.minW)) + tType.minW;
+                    const yL = Math.floor(Math.random() * (HEIGHT - hL - 20)) + 10;
+
+                    troopsLeft.push({
+                        x: 5, y: yL, w: wL, h: hL,
+                        type: tType.icon,
+                        troopSpeedY: tType.speedY,
+                        troopMarchSpeed: tType.marchX,
+                        pushPower: tType.pushPower,
+                        targetY: Math.floor(Math.random() * (HEIGHT - hL - 20)) + 10
+                    });
+
+                }
+
+                // // 2. Создаем правое подкрепление (Червоні)
+                for (let i = 0; i < countR; i++) {
+                    // При создании правого подкрепления (Червоні)
+                    const tType = getRandomTroopType();
+                    const hR = Math.floor(Math.random() * (tType.maxH - tType.minH)) + tType.minH;
+                    const wR = Math.floor(Math.random() * (tType.maxW - tType.minW)) + tType.minW;
+                    const yR = Math.floor(Math.random() * (HEIGHT - hR - 20)) + 10;
+
+                    // ИСПРАВЛЕНО: Теперь пушим именно в troopsRight и используем правильные переменные со знаком R
+                    troopsRight.push({
+                        x: WIDTH - wR - 5,
+                        y: yR,
+                        w: wR,
+                        h: hR,
+                        type: tType.icon,
+                        troopSpeedY: tType.speedY,
+                        troopMarchSpeed: tType.marchX,
+                        pushPower: tType.pushPower,
+                        targetY: Math.floor(Math.random() * (HEIGHT - hR - 20)) + 10
+                    });
+                }
+
+                
+                draw(); 
+            }, 3000); 
+
+        }
+
+        function resolveTroopCollisions(list, isLeftCountry) {
+            // Проходимо по масиву військ кілька разів для точного розштовхування великих скупчень
+            for (let pass = 0; pass < 3; pass++) {
+                for (let i = 0; i < list.length; i++) {
+                    for (let j = i + 1; j < list.length; j++) {
+                        const a = list[i];
+                        const b = list[j];
+
+                        // Обчислюємо перекриття по осях X та Y
+                        const overlapX = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+                        const overlapY = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+
+                        // Якщо є перетинання за обома осями — загін наїхав на загін
+                        if (overlapX > 0 && overlapY > 0) {
+                            // Розштовхуємо в тому напрямку, де перекриття менше (по вертикалі)
+                            if (overlapY < overlapX) {
+                                if (a.y + a.h / 2 < b.y + b.h / 2) {
+                                    a.y -= overlapY / 2;
+                                    b.y += overlapY / 2;
+                                } else {
+                                    a.y += overlapY / 2;
+                                    b.y -= overlapY / 2;
+                                }
+                            } else {
+                                // Якщо перекриття менше по горизонталі — штовхаємо назад у тил того, хто позаду
+                                if (isLeftCountry) {
+                                    // Для синіх: той, у кого менший X, відсувається лівіше (в тил)
+                                    if (a.x < b.x) a.x -= overlapX; else b.x -= overlapX;
+                                } else {
+                                    // Для червоних: той, у кого більший X, відсувається правіше (в тил)
+                                    if (a.x > b.x) a.x += overlapX; else b.x += overlapX;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Генератор випадкового яскравого кольору в форматі HEX
+        function getRandomHexColor() {
+            // Випадковим чином вирішуємо, який тип кольору згенерувати (0 - пастельний, 1 - монохромний/сірий)
+            const type = Math.floor(Math.random() * 2);
+
+            if (type === 0) {
+                // Генерація пастельних кольорів (змішуємо випадковий колір з великою кількістю білого)
+                const r = Math.floor((Math.random() * 100) + 130);
+                const g = Math.floor((Math.random() * 100) + 130);
+                const b = Math.floor((Math.random() * 100) + 130);
+                return `rgb(${r}, ${g}, ${b})`;
+            } else {
+                // Генерація монохромної палітри: від чистого білого, через сірий, до темного
+                const grayscalePresets = [
+                    '#ffffff', '#f3f4f6', '#e5e7eb', '#d1d5db', 
+                    '#9ca3af', '#4b5563', '#374151', '#1f2937', '#111827'
+                ];
+                return grayscalePresets[Math.floor(Math.random() * grayscalePresets.length)];
+            }
+        }
+
+
+        // Генерує унікальний стиль прапора та фону для обох країн
+        function generateCountryStyles() {
+            // Величезний вибір історичних та класичних типів прапорів
+            const flagTypes = [
+                'horizontal-tricolor', 'vertical-bicolor', 'monocolor', 'cross', 'nordic',
+                'vertical-tricolor', 'triangle-chevron', 'diagonal', 'border-frame'
+            ];
+            
+            // Нові унікальні емблеми для армій
+            const emblems = ['none', 'star', 'crescent', 'cross-emblem', 'circle', 'crown', 'shield', 'sword', 'sun', 'diamond'];
+
+            const realFlagColors = [
+                '#ffffff', // Білий
+                '#d52b1e', // Червоний
+                '#0038a8', // Синій
+                '#009b48', // Зелений
+                '#ffd100', // Жовтий / Золотий
+                '#111111'  // Чорний
+            ];
+
+            const getUniqueColors = () => {
+                let shuffled = [...realFlagColors].sort(() => Math.random() - 0.5);
+                return [shuffled[0], shuffled[1], shuffled[2]];
+            };
+
+            // Допоміжна перевірка: чи підходить тип прапора для нанесення емблеми
+            const allowsEmblem = (type) => ['horizontal-tricolor', 'vertical-bicolor', 'monocolor', 'vertical-tricolor', 'diagonal', 'border-frame'].includes(type);
+
+            // Стиль для Лівої країни (Страна А)
+            const typeL = flagTypes[Math.floor(Math.random() * flagTypes.length)];
+            const colorsL = getUniqueColors();
+            countryStyles.left = {
+                bg: getRandomHexColor(),
+                flagType: typeL,
+                colors: colorsL,
+                emblem: allowsEmblem(typeL) ? emblems[Math.floor(Math.random() * emblems.length)] : 'none',
+                emblemColor: ['#ffffff', '#ffd100'].includes(colorsL[0]) ? '#111111' : '#ffffff'
+            };
+
+            // Стиль для Правої країни (Страна Б)
+            const typeR = flagTypes[Math.floor(Math.random() * flagTypes.length)];
+            const colorsR = getUniqueColors();
+            countryStyles.right = {
+                bg: getRandomHexColor(),
+                flagType: typeR,
+                colors: colorsR,
+                emblem: allowsEmblem(typeR) ? emblems[Math.floor(Math.random() * emblems.length)] : 'none',
+                emblemColor: ['#ffffff', '#ffd100'].includes(colorsR[0]) ? '#111111' : '#ffffff'
+            };
+        }
+
+
+        // Допоміжна функція малювання прапора всередині прямокутника військ
+        function drawFlagInsideRect(x, y, w, h, troop, isLeftCountry) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(x, y, w, h);
+            ctx.clip();
+
+            // ИСПРАВЛЕНО: Теперь стиль берется строго по переданному флагу страны, 
+            // независимо от того, в какой точке экрана находится прямоугольник!
+            const style = isLeftCountry ? countryStyles.left : countryStyles.right;
+            const c = style.colors;
+
+
+
+            // 1. ОТРИСОВКА БАЗОВОЇ ТЕКСТУРИ ПРАПОРА
+            if (style.flagType === 'horizontal-tricolor') {
+                const stripeH = h / 3;
+                ctx.fillStyle = c[0]; ctx.fillRect(x, y, w, stripeH);
+                ctx.fillStyle = c[1]; ctx.fillRect(x, y + stripeH, w, stripeH);
+                ctx.fillStyle = c[2]; ctx.fillRect(x, y + stripeH * 2, w, stripeH);
+            } 
+            else if (style.flagType === 'vertical-bicolor') {
+                const stripeW = w / 2;
+                ctx.fillStyle = c[0]; ctx.fillRect(x, y, stripeW, h);
+                ctx.fillStyle = c[1]; ctx.fillRect(x + stripeW, y, stripeW, h);
+            } 
+            else if (style.flagType === 'monocolor') {
+                ctx.fillStyle = c[0]; ctx.fillRect(x, y, w, h);
+            }
+            else if (style.flagType === 'vertical-tricolor') {
+                // Вертикальний триколор (на кшталт Франції чи Італії)
+                const stripeW = w / 3;
+                ctx.fillStyle = c[0]; ctx.fillRect(x, y, stripeW, h);
+                ctx.fillStyle = c[1]; ctx.fillRect(x + stripeW, y, stripeW, h);
+                ctx.fillStyle = c[2]; ctx.fillRect(x + stripeW * 2, y, stripeW, h);
+            }
+            else if (style.flagType === 'triangle-chevron') {
+                // Прапор із трикутником зліва (на кшталт Чехії чи Філіппін)
+                ctx.fillStyle = c[0]; ctx.fillRect(x, y, w, h / 2);
+                ctx.fillStyle = c[1]; ctx.fillRect(x, y + h / 2, w, h / 2);
+                ctx.fillStyle = c[2];
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x + w * 0.4, y + h / 2);
+                ctx.lineTo(x, y + h);
+                ctx.closePath();
+                ctx.fill();
+            }
+            else if (style.flagType === 'diagonal') {
+                // Діагональний розподіл кольорів
+                ctx.fillStyle = c[0]; ctx.fillRect(x, y, w, h);
+                ctx.fillStyle = c[1];
+                ctx.beginPath();
+                ctx.moveTo(x, y + h);
+                ctx.lineTo(x + w, y);
+                ctx.lineTo(x + w, y + h);
+                ctx.closePath();
+                ctx.fill();
+            }
+            else if (style.flagType === 'border-frame') {
+                // Рамковий прапор (кольорова межа по периметру)
+                ctx.fillStyle = c[0]; ctx.fillRect(x, y, w, h);
+                ctx.fillStyle = c[1];
+                const bw = Math.min(w, h) * 0.15; // Товщина рамки
+                ctx.fillRect(x + bw, y + bw, w - bw * 2, h - bw * 2);
+            }
+            else if (style.flagType === 'cross') {
+                ctx.fillStyle = c[0]; ctx.fillRect(x, y, w, h);
+                ctx.fillStyle = c[1];
+                ctx.fillRect(x, y + h/2 - 4, w, 8);
+                ctx.fillRect(x + w/2 - 4, y, 8, h);
+            } 
+            else if (style.flagType === 'nordic') {
+                ctx.fillStyle = c[0]; ctx.fillRect(x, y, w, h);
+                ctx.fillStyle = c[1];
+                ctx.fillRect(x, y + h/2 - 4, w, 8);
+                ctx.fillRect(x + w * 0.35 - 4, y, 8, h);
+            }
+
+            // 2. НАКЛАДАННЯ НОВИХ ЕМБЛЕМ
+            if (style.emblem && style.emblem !== 'none') {
+                ctx.fillStyle = style.emblemColor;
+                ctx.strokeStyle = style.emblemColor;
+                ctx.lineWidth = 2;
+                
+                const centerX = x + w / 2;
+                const centerY = y + h / 2;
+                const size = Math.min(w, h) * 0.35;
+
+                if (style.emblem === 'circle') {
+                    ctx.beginPath(); ctx.arc(centerX, centerY, size / 2, 0, Math.PI * 2); ctx.fill();
+                } 
+                else if (style.emblem === 'cross-emblem') {
+                    ctx.fillRect(centerX - size/2, centerY - 2, size, 4);
+                    ctx.fillRect(centerX - 2, centerY - size/2, 4, size);
+                } 
+                else if (style.emblem === 'star') {
+                    ctx.beginPath();
+                    for (let i = 0; i < 5; i++) {
+                        ctx.lineTo(centerX + Math.cos((18 + i * 72) * Math.PI / 180) * (size / 2),
+                                centerY - Math.sin((18 + i * 72) * Math.PI / 180) * (size / 2));
+                        ctx.lineTo(centerX + Math.cos((54 + i * 72) * Math.PI / 180) * (size / 5),
+                                centerY - Math.sin((54 + i * 72) * Math.PI / 180) * (size / 5));
+                    }
+                    ctx.closePath(); ctx.fill();
+                } 
+                else if (style.emblem === 'crescent') {
+                    ctx.beginPath(); ctx.arc(centerX, centerY, size / 2, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = (style.flagType === 'monocolor') ? c[0] : ((style.flagType === 'horizontal-tricolor') ? c[1] : c[1]); 
+                    ctx.beginPath(); ctx.arc(centerX + size * 0.2, centerY, size / 2, 0, Math.PI * 2); ctx.fill();
+                }
+                else if (style.emblem === 'diamond') {
+                    // Ромб / Діаманд
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY - size / 2);
+                    ctx.lineTo(centerX + size / 2, centerY);
+                    ctx.lineTo(centerX, centerY + size / 2);
+                    ctx.lineTo(centerX - size / 2, centerY);
+                    ctx.closePath(); ctx.fill();
+                }
+                else if (style.emblem === 'sun') {
+                    // Сонце з променями
+                    ctx.beginPath(); ctx.arc(centerX, centerY, size / 4, 0, Math.PI * 2); ctx.fill();
+                    for (let i = 0; i < 8; i++) {
+                        const angle = (i * 45) * Math.PI / 180;
+                        ctx.beginPath();
+                        ctx.moveTo(centerX + Math.cos(angle) * (size / 3), centerY + Math.sin(angle) * (size / 3));
+                        ctx.lineTo(centerX + Math.cos(angle) * (size / 2), centerY + Math.sin(angle) * (size / 2));
+                        ctx.stroke();
+                    }
+                }
+                else if (style.emblem === 'shield') {
+                    // Середньовічний геральдичний щит
+                    ctx.beginPath();
+                    ctx.moveTo(centerX - size / 2, centerY - size / 2);
+                    ctx.lineTo(centerX + size / 2, centerY - size / 2);
+                    ctx.lineTo(centerX + size / 2, centerY);
+                    ctx.quadraticCurveTo(centerX + size / 2, centerY + size / 2, centerX, centerY + size / 2);
+                    ctx.quadraticCurveTo(centerX - size / 2, centerY + size / 2, centerX - size / 2, centerY);
+                    ctx.closePath(); ctx.fill();
+                }
+                else if (style.emblem === 'crown') {
+                    // Корона
+                    ctx.beginPath();
+                    ctx.moveTo(centerX - size / 2, centerY + size / 3);
+                    ctx.lineTo(centerX + size / 2, centerY + size / 3);
+                    ctx.lineTo(centerX + size / 2, centerY - size / 4);
+                    ctx.lineTo(centerX + size / 4, centerY + size / 10);
+                    ctx.lineTo(centerX, centerY - size / 3);
+                    ctx.lineTo(centerX - size / 4, centerY + size / 10);
+                    ctx.lineTo(centerX - size / 2, centerY - size / 4);
+                    ctx.closePath(); ctx.fill();
+                }
+                else if (style.emblem === 'sword') {
+                    // Меч (вертикальний)
+                    ctx.fillRect(centerX - 2, centerY - size / 2, 4, size * 0.8); // Клинок
+                    ctx.fillRect(centerX - size / 3, centerY + size / 4, (size / 3) * 2, 4); // Гарда
+                    ctx.fillRect(centerX - 3, centerY + size / 4, 6, size * 0.2); // Руків'я
+                }
+            }
+
+                // --- ИСПРАВЛЕНО: МАКСИМАЛЬНО ВИДИМЫЕ ЗНАЧКИ КЛАССОВ ВОЙСК В УГЛАХ ---
+            // Сначала настраиваем параметры для черной контрастной подложки-обводки
+            ctx.strokeStyle = "rgba(0, 0, 0, 1)"; // Жирный черный контур
+            ctx.lineWidth = 3.5;                 // Толщина обводки
+            ctx.lineJoin = "round";              // Сглаживаем углы, чтобы не было артефактов
+            ctx.lineCap = "round";
+
+            let cx, cy;
+            if (isLeftCountry) { // Используем переданный нами ранее флаг страны
+                cx = x + w - 12;
+                cy = y + 12;
+            } else { 
+                cx = x + 12;
+                cy = y + 12;
+            }
+
+            // --- ПЕРВЫЙ ПРОХОД: Рисуем черную толстую подложку ---
+            if (troop.type === 'tank') {
+                ctx.beginPath();
+                ctx.moveTo(cx, cy - 5); ctx.lineTo(cx + 8, cy);
+                ctx.lineTo(cx, cy + 5); ctx.lineTo(cx - 8, cy);
+                ctx.closePath();
+                ctx.stroke();
+            } 
+            else if (troop.type === 'recon') {
+                ctx.beginPath();
+                ctx.moveTo(cx, cy - 6); ctx.lineTo(cx + 6, cy + 4); ctx.lineTo(cx - 6, cy + 4);
+                ctx.closePath();
+                ctx.stroke();
+            } 
+            else {
+                ctx.beginPath();
+                ctx.moveTo(cx - 5, cy); ctx.lineTo(cx + 5, cy);
+                ctx.moveTo(cx, cy - 5); ctx.lineTo(cx, cy + 5);
+                ctx.stroke();
+            }
+
+            // --- ВТОРОЙ ПРОХОД: Поверх черной обводки накладываем яркий белый значок ---
+            ctx.strokeStyle = "rgba(255, 255, 255, 1)"; // Чистый ярко-белый цвет
+            ctx.fillStyle = "rgba(255, 255, 255, 1)";
+            ctx.lineWidth = 1.5;                         // Обычная толщина линии значка
+
+            if (troop.type === 'tank') {
+                // Заливаем ромб белым цветом, чтобы он выделялся еще сильнее
+                ctx.beginPath();
+                ctx.moveTo(cx, cy - 5); ctx.lineTo(cx + 8, cy);
+                ctx.lineTo(cx, cy + 5); ctx.lineTo(cx - 8, cy);
+                ctx.closePath();
+                ctx.fill(); 
+                ctx.stroke();
+            } 
+            else if (troop.type === 'recon') {
+                // Заливаем стрелочку разведки белым цветом
+                ctx.beginPath();
+                ctx.moveTo(cx, cy - 6); ctx.lineTo(cx + 6, cy + 4); ctx.lineTo(cx - 6, cy + 4);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+            } 
+            else {
+                // Рисуем аккуратный белый крестик пехоты
+                ctx.beginPath();
+                ctx.moveTo(cx - 5, cy); ctx.lineTo(cx + 5, cy);
+                ctx.moveTo(cx, cy - 5); ctx.lineTo(cx, cy + 5);
+                ctx.stroke();
+            }
+
+
+
+            ctx.restore();
+        }
+
+        btnHeatmap.addEventListener('click', () => {
+            showHeatmap = !showHeatmap;
+            btnHeatmap.textContent = `Хитмап: ${showHeatmap ? 'ВКЛ' : 'ВЫКЛ'}`;
+            btnHeatmap.classList.toggle('active', showHeatmap); // подсветит кнопку желтым, если включена
+            draw(); // мгновенно обновляем экран
+        });
+
+
+
+    </script>
+</body>
+</html>
