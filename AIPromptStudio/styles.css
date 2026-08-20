@@ -28,14 +28,7 @@ h1 {
     background-color: #ffb700;
     margin-bottom: 25px;
 }
-.main-layout {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 25px;
-}
-@media (max-width: 768px) {
-    .main-layout { grid-template-columns: 1fr; }
-}
+
 h2 {
     color: #ffb700;
     font-size: 13px;
@@ -110,7 +103,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* Панели с тонкими рамками */
-.editor-panel, .library-panel {
+.editor-panel {
     border: 1px solid #ffb700;
     padding: 20px;
     background-color: #0b0c10;
@@ -145,14 +138,6 @@ input:focus, select:focus, textarea:focus {
 
 .search-box input { margin-bottom: 15px; }
 
-/* Список карточек */
-.prompts-list {
-    max-height: 400px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
 .prompts-list::-webkit-scrollbar { width: 3px; }
 .prompts-list::-webkit-scrollbar-track { background: #0b0c10; }
 .prompts-list::-webkit-scrollbar-thumb { background: #ffb700; }
@@ -227,4 +212,47 @@ input:focus, select:focus, textarea:focus {
 }
 .card-tag {
     display: none; /* Скрываем теги категорий, так как мы их удалили */
+}
+
+
+/* 1. Ограничиваем общую высоту сетки макета, чтобы она не уходила вниз */
+.main-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    height: calc(100vh - 120px); /* Занимает всю высоту экрана минус шапка */
+    align-items: start;
+}
+
+/* 2. Делаем панель библиотеки флекс-контейнером на всю доступную высоту */
+.library-panel {
+    border: 1px solid #ffb700;
+    padding: 20px;
+    background-color: #0b0c10;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+/* 3. Заставляем список промптов забирать все свободное место и скроллиться внутри панели */
+.prompts-list {
+    flex-grow: 1;
+    max-height: none; /* Убираем старое жесткое ограничение в 400px */
+    overflow-y: auto;  /* Включаем вертикальную прокрутку */
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-right: 5px; /* Небольшой отступ, чтобы карточки не перекрывали скроллбар */
+}
+
+/* Адаптивность для мобильных устройств: возвращаем обычный скролл страницы */
+@media (max-width: 768px) {
+    .main-layout { 
+        grid-template-columns: 1fr; 
+        height: auto; /* На смартфонах панели будут идти друг за другом */
+    }
+    .library-panel {
+        height: 500px; /* Фиксированная удобная высота для библиотеки на мобильных */
+    }
 }
