@@ -1199,6 +1199,7 @@
         function startReinforcements() {
             // Якщо таймер уже працює, нічого не робимо, щоб не дублювати його
             if (reinforcementInterval) return;
+            let reinforcementTicks = 0; 
 
             reinforcementInterval = setInterval(() => {
                 // Выбираем случайное количество отрядов для левой и правой стороны (минимум 1)
@@ -1245,18 +1246,36 @@
                         targetY: Math.floor(Math.random() * (HEIGHT - hR - 20)) + 10
                     });
                 }
+
                 // --- ДОБАВЛЕНИЕ: Гарнизоны из удерживаемых городов ---
+                // Поскольку setInterval срабатывает каждые 3000 мс (3 секунды),
+                // вводим счетчик циклов, чтобы для оккупированных городов код срабатывал раз в 3 цикла (3 * 3 = 9 секунд).
+
+                if (typeof reinforcementTicks === 'undefined') {
+                    window.reinforcementTicks = 0;
+                }
+                window.reinforcementTicks++;
+
                 settlements.forEach(s => {
                     const borderXatY = borderPoints[Math.floor(s.y)];
                     const isLeftControl = s.x < borderXatY; // Кто сейчас контролирует город
+                    
+                    // Изначальный владелец города (в начале игры левая половина экрана — Страна А, правая — Страна Б)
+                    const originalOwnerLeft = s.x < (WIDTH / 2); 
+                    const isOccupied = isLeftControl !== originalOwnerLeft; // Город оккупирован, если текущий контроль не совпадает с изначальным
 
-                    // С шансом 20% при каждом цикле подкреплений город отправляет небольшой батальон
+                    // Если город оккупирован, пускаем подкрепление только каждый 3-й цикл интервала (раз в 9 секунд)
+                    if (isOccupied && window.reinforcementTicks % 3 !== 0) {
+                        return; // Пропускаем этот цикл для оккупированного города
+                    }
+
+                    // С шансом 20% город отправляет небольшой батальон
                     if (Math.random() < 0.20) {
                         const tType = getRandomTroopType();
                         
                         // Размеры гарнизонного отряда (чуть меньше стандартных для баланса)
                         const h = Math.floor(Math.random() * (tType.maxH - tType.minH)) + tType.minH;
-                        const w = Math.floor(Math.random() * (tType.maxW - tType.minW)) + tType.minW;
+                        const w = Math.floor(Math.random() * (tType.maxW - tType.minW)) + tType.minW; 
                         
                         if (isLeftControl) {
                             troopsLeft.push({
