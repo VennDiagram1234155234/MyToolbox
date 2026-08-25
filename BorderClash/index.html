@@ -151,8 +151,11 @@
         <button id="btn-speed" style="display: none; ">Скорость: 1x</button>
         <button id="btn-heatmap">Хитмап: ВЫКЛ</button>
         <div id="status">Шаг 1: Нарисуйте границу</div>
-        <button id="btn-attack" disabled>Атаковать!</button>
+        <!-- Новые кнопки перемирия -->
+        <button id="btn-peace" style="display: none; background-color: #cca700; color: #000;">Заключить мир</button>
+        <button id="btn-confirm-border" style="display: none; background-color: #1e3a1e; color: #fff;">Утвердить новые границы</button>
     </div>
+
 
     <!-- Главный контейнер игрового поля -->
     <div id="game-container">
@@ -176,6 +179,66 @@
             RECON:    { name: 'Разведка', minW: 30, maxW: 40, minH: 25, maxH: 35, speedY: 7, marchX: 10, pushPower: 2, icon: 'recon' }
         };
 
+        // Конфигурация типов скругленного рельефа
+        const TERRAIN_TYPES = {
+            PLAINS: { name: 'Равнина', speedMult: 1.0, powerMult: 1.0 },
+            MOUNTAIN: { name: 'Горы', color: '#5a5e6b', speedMult: 0.3, powerMult: 1.5 },
+            RIVER: { name: 'Река', color: '#3b82f6', speedMult: 0.4, powerMult: 0.6 },
+            LAKE: { name: 'Озеро', color: '#1d4ed8', speedMult: 0.0, powerMult: 0.0 }
+        };
+
+        // Объект для хранения векторных сглаженных объектов рельефа
+        let worldTerrain = {
+            mountains: [],
+            lakes: [],
+            riverPoints: []
+        };
+
+        // Функция быстрого определения типа местности в любой точке экрана
+        function getTerrainTypeAt(x, y) {
+            for (let lake of worldTerrain.lakes) {
+                let dx = x - lake.x;
+                let dy = y - lake.y;
+                if (dx * dx + dy * dy < lake.radius * lake.radius) return TERRAIN_TYPES.LAKE;
+            }
+            for (let mnt of worldTerrain.mountains) {
+                let dx = x - mnt.x;
+                let dy = y - mnt.y;
+                if (dx * dx + dy * dy < mnt.radius * mnt.radius) return TERRAIN_TYPES.MOUNTAIN;
+            }
+            for (let pt of worldTerrain.riverPoints) {
+                let dx = x - pt.x;
+                let dy = y - pt.y;
+                if (dx * dx + dy * dy < 25 * 25) return TERRAIN_TYPES.RIVER; // Радиус русла ~25px
+            }
+            return TERRAIN_TYPES.PLAINS;
+        }
+
+
+        // Вспомогательная функция быстрого определения типа местности в любой точке экрана
+        function getTerrainTypeAt(x, y) {
+            // 1. Проверяем озёра
+            for (let lake of worldTerrain.lakes) {
+                let dx = x - lake.x;
+                let dy = y - lake.y;
+                if (dx * dx + dy * dy < lake.radius * lake.radius) return TERRAIN_TYPES.LAKE;
+            }
+            // 2. Проверяем горы
+            for (let mnt of worldTerrain.mountains) {
+                let dx = x - mnt.x;
+                let dy = y - mnt.y;
+                if (dx * dx + dy * dy < mnt.radius * mnt.radius) return TERRAIN_TYPES.MOUNTAIN;
+            }
+            // 3. Проверяем реку (радиус русла реки ~25 пикселей)
+            for (let pt of worldTerrain.riverPoints) {
+                let dx = x - pt.x;
+                let dy = y - pt.y;
+                if (dx * dx + dy * dy < 25 * 25) return TERRAIN_TYPES.RIVER;
+            }
+            return TERRAIN_TYPES.PLAINS;
+        }
+
+
         // Функция случайного выбора типа войск (например: 60% пехота, 20% танки, 20% разведка)
         function getRandomTroopType() {
             const rand = Math.random();
@@ -194,9 +257,12 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const btnReset = document.getElementById('btn-reset');
-        const btnAttack = document.getElementById('btn-attack');
         const statusText = document.getElementById('status');
-        const btnAuto = document.getElementById('btn-auto'); // Ссылка на кнопку автобоя
+        const btnAuto = document.getElementById('btn-auto');
+        // Привязываем новые кнопки
+        const btnPeace = document.getElementById('btn-peace');
+        const btnConfirmBorder = document.getElementById('btn-confirm-border');
+
         let autoInterval = null;                             // Переменная для хранения таймера
         const btnSpeed = document.getElementById('btn-speed'); // Посилання на кнопку швидкості
         let simSpeed = 1;  
@@ -243,6 +309,142 @@
             lossesRight = 0;
             // Создаем пустую сетку хитмапа под размер экрана
             heatmapGrid = Array.from({ length: Math.ceil(HEIGHT / GRID_SIZE) }, () => new Array(Math.ceil(WIDTH / GRID_SIZE)).fill(0));
+            // Генерация пустой сетки рельефа (по умолчанию равнина)
+            const rows = Math.ceil(HEIGHT / GRID_SIZE);
+            const cols = Math.ceil(WIDTH / GRID_SIZE);
+            terrainGrid = Array.from({ length: rows }, () => new Array(cols).fill(TERRAIN_TYPES.PLAINS));
+
+            // Функция генерации "пятна" ландшафта (для гор и озёр)
+            function spawnTerrainBlob(type, size) {
+                let startX = Math.floor(Math.random() * cols);
+                let startY = Math.floor(Math.random() * rows);
+                for (let i = 0; i < size; i++) {
+                    if (startY >= 0 && startY < rows && startX >= 0 && startX < cols) {
+                        terrainGrid[startY][startX] = type;
+                    }
+                    // Случайный шаг в сторону для создания естественной формы
+                    startX += Math.floor(Math.random() * 3) - 1;
+                    startY += Math.floor(Math.random() * 3) - 1;
+                }
+            }
+
+            // Очищаем старые векторные данные рельефа перед генерацией новой карты
+            worldTerrain.mountains = [];
+            worldTerrain.lakes = [];
+            worldTerrain.riverPoints = [];
+
+            // 1. РАНДОМНАЯ РЕКА (появляется с шансом 60%)
+            if (Math.random() < 0.60) {
+                let riverX = Math.floor(Math.random() * (WIDTH - 300)) + 150;
+                let drift = Math.random() * 4 - 2; 
+                let swing = Math.random() * Math.PI; 
+
+                for (let y = 0; y <= HEIGHT; y += 15) {
+                    swing += 0.08;
+                    drift += (Math.random() * 2 - 1) * 0.5 + Math.sin(swing) * 0.8;
+                    drift = Math.max(-5, Math.min(5, drift)); 
+                    riverX += drift;
+
+                    if (riverX < 120) { riverX = 120; drift = Math.abs(drift) * 0.4; }
+                    if (riverX > WIDTH - 120) { riverX = WIDTH - 120; drift = -Math.abs(drift) * 0.4; }
+
+                    worldTerrain.riverPoints.push({ x: riverX, y: y });
+                }
+            }
+
+            // Безопасная функция проверки пересечения с рекой (работает корректно, даже если реки нет)
+            function hitsRiver(x, y, radius) {
+                if (worldTerrain.riverPoints.length === 0) return false; // Если реки нет, пересечения быть не может
+                return worldTerrain.riverPoints.some(pt => {
+                    let dx = x - pt.x;
+                    let dy = y - pt.y;
+                    return (dx * dx + dy * dy) < (radius + 25) * (radius + 25);
+                });
+            }
+
+            // 2. РАНДОМНЫЕ ОЗЕРА (может быть от 0 до 4 озер на карте)
+            const lakesCount = Math.floor(Math.random() * 5); // Генерирует 0, 1, 2, 3 или 4 озера
+            for (let i = 0; i < lakesCount; i++) {
+                let cx, cy, radius, isValid;
+                let attempts = 0;
+                
+                do {
+                    cx = Math.floor(Math.random() * (WIDTH - 200)) + 100;
+                    cy = Math.floor(Math.random() * (HEIGHT - 200)) + 100;
+                    radius = Math.floor(Math.random() * 35) + 35;
+                    
+                    isValid = !hitsRiver(cx, cy, radius) && !worldTerrain.lakes.some(lake => {
+                        let dx = cx - lake.x;
+                        let dy = cy - lake.y;
+                        return (dx * dx + dy * dy) < (radius + lake.radius) * (radius + lake.radius);
+                    });
+                    attempts++;
+                } while (!isValid && attempts < 50);
+
+                if (!isValid) continue;
+
+                let points = [];
+                let numPoints = 10;
+                for (let j = 0; j < numPoints; j++) {
+                    let angle = (j / numPoints) * Math.PI * 2;
+                    let r = radius * (0.75 + Math.random() * 0.5); 
+                    points.push({ x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r });
+                }
+                worldTerrain.lakes.push({ x: cx, y: cy, radius: radius, points: points });
+            }
+
+            // Вспомогательная функция создания одной плотной горы
+            function createSingleMountain(cx, cy, radius) {
+                let points = [];
+                let peakPoints = [];
+                let numPoints = 12;
+                for (let j = 0; j < numPoints; j++) {
+                    let angle = (j / numPoints) * Math.PI * 2;
+                    let r = radius * (0.7 + Math.random() * 0.6); 
+                    points.push({ x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r });
+                    let pr = r * 0.35;
+                    peakPoints.push({ x: (cx - 3) + Math.cos(angle) * pr, y: (cy - 5) + Math.sin(angle) * pr });
+                }
+                worldTerrain.mountains.push({ x: cx, y: cy, radius: radius, points: points, peakPoints: peakPoints });
+            }
+
+            // 3. РАНДОМНЫЕ ОДИНОЧНЫЕ ГОРЫ (может быть от 0 до 5 гор на карте)
+            const mountainRanges = Math.floor(Math.random() * 6); // Генерирует от 0 до 5 одиночных гор
+            for (let i = 0; i < mountainRanges; i++) {
+                let cx, cy, radius, isValid;
+                let attempts = 0;
+                do {
+                    cx = Math.floor(Math.random() * (WIDTH - 120)) + 60;
+                    cy = Math.floor(Math.random() * (HEIGHT - 120)) + 60;
+                    radius = Math.floor(Math.random() * 45) + 45;
+                    isValid = !hitsRiver(cx, cy, radius) && !worldTerrain.lakes.some(lake => {
+                        let dx = cx - lake.x;
+                        let dy = cy - lake.y;
+                        return (dx * dx + dy * dy) < (radius + lake.radius) * (radius + lake.radius);
+                    });
+                    attempts++;
+                } while (!isValid && attempts < 50);
+
+                if (isValid) createSingleMountain(cx, cy, radius);
+            }
+
+            // 4. РАНДОМНЫЕ ГОРНЫЕ ХРЕБТЫ (появляются с шансом 35%)
+            if (Math.random() < 0.35) {
+                let hx = Math.floor(Math.random() * (WIDTH - 300)) + 150;
+                let hy = Math.floor(Math.random() * (HEIGHT - 300)) + 150;
+                let angle = Math.random() * Math.PI * 2;
+                let length = Math.floor(Math.random() * 3) + 3;
+
+                for (let k = 0; k < length; k++) {
+                    let radius = Math.floor(Math.random() * 20) + 40;
+                    if (!hitsRiver(hx, hy, radius) && !worldTerrain.lakes.some(l => Math.hypot(hx-l.x, hy-l.y) < (radius+l.radius))) {
+                        createSingleMountain(hx, hy, radius);
+                    }
+                    hx += Math.cos(angle) * (radius * 1.1);
+                    hy += Math.sin(angle) * (radius * 1.1);
+                }
+            }
+            
             generateCountryStyles();
 
             gameState = 'drawing'; isDrawing = false;
@@ -269,9 +471,12 @@
             btnAuto.disabled = true;
 
             borderPoints.fill(WIDTH / 2);
-            btnAttack.disabled = true;
             statusText.textContent = "Шаг 1: Нарисуйте границу сверху вниз";
             statusText.style.color = "#fff";
+            // Скрываем кнопки перемирия при полном сбросе игры
+            if (typeof btnPeace !== 'undefined') btnPeace.style.display = "none";
+            if (typeof btnConfirmBorder !== 'undefined') btnConfirmBorder.style.display = "none";
+
 
             // --- ИСПРАВЛЕНО: ГЕНЕРАЦИЯ НАСЕЛЕННЫХ ПУНКТОВ С ЛАТИНСКИМИ НАЗВАНИЯМИ ---
             settlements = [];
@@ -294,10 +499,19 @@
             }
 
             for (let i = 0; i < countSettlements; i++) {
-                const sX = Math.floor(Math.random() * (WIDTH - 60)) + 30;
-                const sY = Math.floor(Math.random() * (HEIGHT - 60)) + 30;
-                
+                let sX, sY, terrainType;
+                let attempts = 0;
+
+                // Шукаємо сушу (не Озеро і не Річка), максимум 50 спроб
+                do {
+                    sX = Math.floor(Math.random() * (WIDTH - 60)) + 30;
+                    sY = Math.floor(Math.random() * (HEIGHT - 60)) + 30;
+                    terrainType = getTerrainTypeAt(sX, sY);
+                    attempts++;
+                } while ((terrainType === TERRAIN_TYPES.LAKE || terrainType === TERRAIN_TYPES.RIVER) && attempts < 50);
+
                 const randType = Math.random();
+
                 let sType, sSize, sPrefix;
                 
                 // Меняем префиксы типов на латиницу (St. / T. / V.) или оставляем просто названия
@@ -339,6 +553,122 @@
             ctx.lineTo(WIDTH, 0);
             ctx.closePath();
             ctx.fill();
+            
+            // --- ВЕКТОРНАЯ ОТРИСОВКА РЕЛЬЕФА (БЕЗ РЯБИ, СО ЗНАЧКАМИ ВОЛН) ---
+            ctx.shadowBlur = 0;
+            ctx.shadowColor = "transparent";
+
+            // 1. Отрисовка ПЛОТНЫХ гор без прозрачности и со снежными пиками
+            worldTerrain.mountains.forEach(mnt => {
+                // Плотное каменное основание горы
+                ctx.save();
+                ctx.fillStyle = TERRAIN_TYPES.MOUNTAIN.color;
+                ctx.globalAlpha = 1.0; // Убрали прозрачность, теперь гора полностью сплошная
+                ctx.beginPath();
+                ctx.moveTo(mnt.points[0].x, mnt.points[0].y);
+                for (let i = 0; i < mnt.points.length; i++) {
+                    let curr = mnt.points[i];
+                    let next = mnt.points[(i + 1) % mnt.points.length];
+                    ctx.quadraticCurveTo(curr.x, curr.y, (curr.x + next.x) / 2, (curr.y + next.y) / 2);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+
+                // Непрозрачный заснеженный пик
+                ctx.save();
+                ctx.fillStyle = "#ffffff";
+                ctx.globalAlpha = 0.9; // Сделали снег ярким и контрастным поверх горы
+                ctx.beginPath();
+                ctx.moveTo(mnt.peakPoints[0].x, mnt.peakPoints[0].y);
+                for (let i = 0; i < mnt.peakPoints.length; i++) {
+                    let curr = mnt.peakPoints[i];
+                    let next = mnt.peakPoints[(i + 1) % mnt.peakPoints.length];
+                    ctx.quadraticCurveTo(curr.x, curr.y, (curr.x + next.x) / 2, (curr.y + next.y) / 2);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            });
+
+
+            // 2. Отрисовка ИДЕАЛЬНО ПЛАВНОЙ И КРИВОЙ РЕКИ (через кривые Безье)
+            if (worldTerrain.riverPoints.length > 1) {
+                // Выносим отрисовку плавного русла в отдельную внутреннюю функцию
+                let makeSmoothRiverPath = () => {
+                    ctx.beginPath();
+                    let p0 = worldTerrain.riverPoints[0];
+                    ctx.moveTo(p0.x, p0.y);
+                    
+                    // Проходим по точкам и плавно скругляем каждый поворот реки
+                    for (let i = 1; i < worldTerrain.riverPoints.length - 1; i++) {
+                        let curr = worldTerrain.riverPoints[i];
+                        let next = worldTerrain.riverPoints[i + 1];
+                        let xc = (curr.x + next.x) / 2;
+                        let yc = (curr.y + next.y) / 2;
+                        ctx.quadraticCurveTo(curr.x, curr.y, xc, yc);
+                    }
+                    // Доводим линию до самой последней точки русла
+                    let pLast = worldTerrain.riverPoints[worldTerrain.riverPoints.length - 1];
+                    ctx.lineTo(pLast.x, pLast.y);
+                };
+
+                // Рисуем саму гладкую воду реки
+                ctx.save();
+                ctx.strokeStyle = TERRAIN_TYPES.RIVER.color;
+                ctx.lineWidth = 46; // Немного увеличили ширину русла для солидности
+                ctx.lineCap = "round";
+                ctx.lineJoin = "round";
+                ctx.globalAlpha = 0.85;
+                makeSmoothRiverPath();
+                ctx.stroke();
+                ctx.restore();
+            }
+
+
+            // 3. Отрисовка озер и значка волны по центру
+            worldTerrain.lakes.forEach(lake => {
+                ctx.save();
+                ctx.fillStyle = TERRAIN_TYPES.LAKE.color;
+                ctx.globalAlpha = 0.85;
+                ctx.beginPath();
+                ctx.moveTo(lake.points.x, lake.points.y);
+                for (let i = 0; i < lake.points.length; i++) {
+                    let curr = lake.points[i];
+                    let next = lake.points[(i + 1) % lake.points.length];
+                    ctx.quadraticCurveTo(curr.x, curr.y, (curr.x + next.x) / 2, (curr.y + next.y) / 2);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+
+                // РИСУЕМ ЧЕРНЫЙ ЗНАЧОК ВОЛНЫ ПО ЦЕНТРУ ОЗЕРА
+                ctx.save();
+                ctx.strokeStyle = "#000000"; // Черный цвет линии
+                ctx.lineWidth = 2.5;         // Толщина значка
+                ctx.lineCap = "round";
+                ctx.globalAlpha = 0.5;       // Слегка приглушенный, чтобы вписывался в стиль
+
+                // Рисуем верхнюю извилистую линию волны
+                ctx.beginPath();
+                ctx.moveTo(lake.x - 12, lake.y - 3);
+                ctx.bezierCurveTo(lake.x - 6, lake.y - 7, lake.x - 3, lake.y + 1, lake.x, lake.y - 3);
+                ctx.bezierCurveTo(lake.x + 3, lake.y - 7, lake.x + 6, lake.y + 1, lake.x + 12, lake.y - 3);
+                ctx.stroke();
+
+                // Рисуем нижнюю извилистую линию волны со смещением
+                ctx.beginPath();
+                ctx.moveTo(lake.x - 10, lake.y + 4);
+                ctx.bezierCurveTo(lake.x - 5, lake.y, lake.x - 2, lake.y + 8, lake.x, lake.y + 4);
+                ctx.bezierCurveTo(lake.x + 2, lake.y, lake.x + 5, lake.y + 8, lake.x + 10, lake.y + 4);
+                ctx.stroke();
+                
+                ctx.restore();
+            });
+
+
+            ctx.globalAlpha = 1.0; // Сбрасываем прозрачность
+
 
             // --- ДИНАМИЧЕСКИЙ ПЛАВНЫЙ ХИТМАП (под войсками и городами) ---
             // --- ДИНАМИЧЕСКИЙ ТОП-ХИТМАП С ОГРАНИЧЕНИЕМ КРАСНЫХ ТОЧЕК (под войсками и городами) ---
@@ -633,23 +963,27 @@
 
             lastPoint = currentPoint;
             draw();
-            }
-
-
-
-        function handleEnd() { 
-            if (isDrawing && gameState === 'drawing') { 
-                isDrawing = false; 
-                generateTroops(); 
-                gameState = 'ready'; 
-                btnAttack.disabled = false; 
-                btnAuto.disabled = false; // АКТИВИРУЕМ КНОПКУ АВТОБОЯ
-                // СОХРАНЯЕМ КОПИЮ ЛИНИИ:
-                originalBorderPoints = [...borderPoints]; 
-                statusText.textContent = "Войска созданы! Нажимайте Атаковать или Запустите симуляцию."; 
-            } 
         }
 
+        function handleEnd() {
+            if (isDrawing && gameState === 'drawing') {
+                isDrawing = false;
+                
+                // Проверяем, есть ли уже войска на карте (признак режима перемирия)
+                if (troopsLeft.length > 0 || troopsRight.length > 0) {
+                    statusText.textContent = "Линия изменена. Нажмите 'Утвердить новые границы', чтобы зафиксировать её.";
+                    statusText.style.color = "#cca700";
+                } else {
+                    // Обычный первый запуск игры
+                    generateTroops();
+                    gameState = 'ready';
+                    btnAuto.disabled = false;
+                    originalBorderPoints = [...borderPoints];
+                    statusText.textContent = "Войска созданы! Запустите симуляцию для начала боя.";
+                    statusText.style.color = "#fff";
+                }
+            }
+        }
 
         // Привязка событий мыши
         canvas.addEventListener('mousedown', handleStart);
@@ -743,7 +1077,7 @@
         }
 
         // --- ЛОГИКА КНОПКИ АТАКОВАТЬ ---
-        btnAttack.addEventListener('click', () => {
+        function runBattleTick() {
             if (gameState !== 'ready' && gameState !== 'battle') return;
             gameState = 'battle';
 
@@ -780,17 +1114,23 @@
                         // (Если силы равны, сравниваем ширину отрядов, как и было)
                         // (Если силы равны, сравниваем ширину отрядов, как и было)
                         for (let y = overlapYStart; y <= overlapYEnd; y++) {
+                            // Получаем реальный векторный рельеф в этой точке фронта!
+                            let terrain = getTerrainTypeAt(borderPoints[y], y); 
 
-                            if (l.pushPower !== r.pushPower) {
-                                if (l.pushPower > r.pushPower) borderPoints[y] += 4;
-                                else borderPoints[y] -= 4;
+
+                            // Модифицируем силу продавливания
+                            const powerL = l.pushPower * terrain.powerMult;
+                            const powerR = r.pushPower * terrain.powerMult;
+
+                            if (powerL !== powerR) {
+                                if (powerL > powerR) borderPoints[y] += (4 * terrain.speedMult);
+                                else borderPoints[y] -= (4 * terrain.speedMult);
                             } else {
-                                if (l.w > r.w) borderPoints[y] += 3;
-                                else if (r.w > l.w) borderPoints[y] -= 3;
+                                if (l.w > r.w) borderPoints[y] += (3 * terrain.speedMult);
+                                else if (r.w > l.w) borderPoints[y] -= (3 * terrain.speedMult);
                             }
-
-
                         }
+
 
                     }
                 });
@@ -844,7 +1184,11 @@
                 }
                 const expectedX = minBorderX - t.w - padding;
                 if (t.x < expectedX - 5) {
-                    t.x += t.troopMarchSpeed;
+                    // Считываем скорость прямо из точки, где наступает левый отряд
+                    let terrainL = getTerrainTypeAt(t.x + t.w / 2, t.y + t.h / 2);
+                    let speedMultL = terrainL.speedMult;
+
+                    t.x += (t.troopMarchSpeed * speedMultL);
                     if (t.targetY !== undefined) {
                         if (t.y < t.targetY) t.y += 2;
                         else if (t.y > t.targetY) t.y -= 2;
@@ -859,7 +1203,11 @@
                 }
                 const expectedX = maxBorderX + padding;
                 if (r.x > expectedX + 5) {
-                    r.x -= r.troopMarchSpeed;
+                    // Считываем скорость прямо из точки, где наступает правый отряд
+                    let terrainR = getTerrainTypeAt(r.x + r.w / 2, r.y + r.h / 2);
+                    let speedMultR = terrainR.speedMult;
+
+                    r.x -= (r.troopMarchSpeed * speedMultR);
                     if (r.targetY !== undefined) {
                         if (r.y < r.targetY) r.y += 2;
                         else if (r.y > r.targetY) r.y -= 2;
@@ -1073,7 +1421,7 @@
 
             draw();
             checkVictory();
-        });
+        };
 
         /**
          * Проверка условий победы по состоянию границы и остатку армий
@@ -1091,7 +1439,6 @@
                     clearInterval(reinforcementInterval);
                     reinforcementInterval = null;
                 }
-                btnAttack.disabled = true; 
                 // Добавлена статистика потерь в конец строки
                 statusText.textContent = `ПОБЕДА СТРАНЫ А! 🎉 (Потери А: ${Math.floor(lossesLeft)} | Б: ${Math.floor(lossesRight)})`; 
                 statusText.style.color = "#4a90e2";
@@ -1102,7 +1449,6 @@
                     clearInterval(reinforcementInterval);
                     reinforcementInterval = null;
                 }
-                btnAttack.disabled = true; 
                 // Добавлена статистика потерь в конец строки
                 statusText.textContent = `ПОБЕДА СТРАНЫ Б! 🎉 (Потери А: ${Math.floor(lossesLeft)} | Б: ${Math.floor(lossesRight)})`; 
                 statusText.style.color = "#e24a4a";
@@ -1113,7 +1459,6 @@
                     clearInterval(reinforcementInterval);
                     reinforcementInterval = null;
                 }
-                btnAttack.disabled = true; 
                 statusText.textContent = `НИЧЬЯ! (Потери А: ${Math.floor(lossesLeft)} | Б: ${Math.floor(lossesRight)})`; 
                 statusText.style.color = "#eab308";
             }
@@ -1131,17 +1476,14 @@
         btnReset.addEventListener('click', init);
         // Допоміжна функція для запуску/перезапуску таймера з урахуванням швидкості
         
-        function startAutoInterval() {
+        function startAutoInterval() { 
             if (autoInterval) clearInterval(autoInterval);
-            
-            // Базовий крок — 100 мс. Ділимо на simSpeed: 
-            // При 2х інтервал стане 50 мс (швидше), при 0.5х — 200 мс (повільніше)
-            const intervalTime = 100 / simSpeed; 
-            
+            const intervalTime = 100 / simSpeed;
             autoInterval = setInterval(() => {
-                btnAttack.click();
+                runBattleTick(); // Теперь напрямую вызываем боевой шаг без симуляции кликов
             }, intervalTime);
         }
+
 
         btnAuto.addEventListener('click', () => {
             if (gameState === 'gameover' || gameState === 'drawing') return;
@@ -1160,12 +1502,25 @@
                 btnAuto.classList.remove('active');
                 btnAuto.textContent = "Запустить симуляцию";
                 btnSpeed.style.display = "none"; 
+
+                // Прячем кнопку мира на паузе
+                btnPeace.style.display = "none";
             } else {
                 // --- СТАРТ ---
                 btnAuto.classList.add('active');
                 btnAuto.textContent = "Поставить на паузу";
                 btnSpeed.style.display = "inline-block"; 
                 
+                // Автоматически включаем состояние боя, если игра была готова
+                if (gameState === 'ready') {
+                    gameState = 'battle';
+                }
+                
+                // Показываем кнопку заключения мира, скрываем кнопку подтверждения
+                if (gameState === 'battle') {
+                    btnPeace.style.display = "inline-block";
+                }
+
                 startAutoInterval();
                 
                 // ЗНОВУ ЗАПУСКАЄМО підкріплення при знятті з паузи
@@ -1658,6 +2013,100 @@
             draw(); // мгновенно обновляем экран
         });
 
+
+        // Постоянно обновляем экран для плавной анимации водной ряби
+        function animate() {
+            draw();
+            requestAnimationFrame(animate);
+        }
+        animate(); // Запускаем цикл анимации
+
+        // --- ЛОГИКА РЕЖИМА ПЕРЕМИРИЯ ---
+
+        btnPeace.addEventListener('click', () => {
+            if (gameState !== 'battle') return;
+
+            // 1. Полностью останавливаем симуляцию и таймеры
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            if (reinforcementInterval) {
+                clearInterval(reinforcementInterval);
+                reinforcementInterval = null;
+            }
+
+            btnAuto.classList.remove('active');
+            btnAuto.textContent = "Запустить симуляцию";
+            btnAuto.disabled = true; // Отключаем симуляцию на время перерисовки
+            btnSpeed.style.display = "none";
+            btnPeace.style.display = "none";
+
+            // 2. Создание демилитаризованной зоны (удаляем войска у фронта)
+            const dmzDistance = 75; // Расстояние от границы в пикселях, на котором войска исчезают
+
+            // Фильтруем левые войска (убираем те, что слишком близко справа от своей передней линии у границы)
+            troopsLeft = troopsLeft.filter(t => {
+                let borderX = borderPoints[Math.floor(t.y + t.h / 2)];
+                // Если расстояние от правого края отряда до границы меньше dmzDistance — удаляем
+                return (borderX - (t.x + t.w)) > dmzDistance;
+            });
+
+            // Фильтруем правые войска
+            troopsRight = troopsRight.filter(t => {
+                let borderX = borderPoints[Math.floor(t.y + t.h / 2)];
+                // Если расстояние от левого края отряда до границы меньше dmzDistance — удаляем
+                return (t.x - borderX) > dmzDistance;
+            });
+
+            // 3. Включаем режим рисования новой границы
+            gameState = 'drawing';
+            statusText.textContent = "Режим перемирия: Нарисуйте новую линию границы сверху вниз";
+            statusText.style.color = "#cca700";
+
+            // Показываем кнопку утверждения
+            btnConfirmBorder.style.display = "inline-block";
+            draw();
+        });
+
+        btnConfirmBorder.addEventListener('click', () => {
+            if (gameState !== 'drawing') return;
+
+            // Сохраняем новую копию прорисованной линии
+            originalBorderPoints = [...borderPoints];
+
+            // Переводим игру обратно в режим готовности
+            gameState = 'ready';
+            statusText.textContent = "Новые границы утверждены! Нажмите 'Запустить симуляцию' для возобновления боя.";
+            statusText.style.color = "#fff";
+
+            // Прячем кнопку утверждения и снова активируем кнопку симуляции
+            btnConfirmBorder.style.display = "none";
+            btnAuto.disabled = false;
+
+            // Привязываем выжившие войска к новой линии границы, если они оказались слишком близко
+            const padding = 8;
+            
+            troopsLeft.forEach(t => {
+                let minBorderX = WIDTH;
+                for (let y = Math.floor(t.y); y < Math.floor(t.y + t.h); y++) {
+                    if (y >= 0 && y < HEIGHT && borderPoints[y] < minBorderX) minBorderX = borderPoints[y];
+                }
+                let expectedX = minBorderX - t.w - padding;
+                if (t.x > expectedX) t.x = expectedX; // Отодвигаем выживших назад, если новая граница их зажала
+            });
+
+            troopsRight.forEach(r => {
+                let maxBorderX = 0;
+                for (let y = Math.floor(r.y); y < Math.floor(r.y + r.h); y++) {
+                    if (y >= 0 && y < HEIGHT && borderPoints[y] > maxBorderX) maxBorderX = borderPoints[y];
+                }
+                let expectedX = maxBorderX + padding;
+                if (r.x < expectedX) r.x = expectedX;
+            });
+
+            draw();
+        });
 
 
     </script>
