@@ -184,15 +184,20 @@
             PLAINS: { name: 'Равнина', speedMult: 1.0, powerMult: 1.0 },
             MOUNTAIN: { name: 'Горы', color: '#5a5e6b', speedMult: 0.3, powerMult: 1.5 },
             RIVER: { name: 'Река', color: '#3b82f6', speedMult: 0.4, powerMult: 0.6 },
-            LAKE: { name: 'Озеро', color: '#1d4ed8', speedMult: 0.0, powerMult: 0.0 }
+            LAKE: { name: 'Озеро', color: '#1d4ed8', speedMult: 0.15, powerMult: 0.4 },
+            FOREST: { name: 'Лес', color: '#1e3f20', speedMult: 0.8, powerMult: 1.0 },  // Новое: Лес (зеленый)
+            SWAMP: { name: 'Болото', color: '#323c23', speedMult: 0.35, powerMult: 0.7 } // Новое: Болото (хаки/гнилой)
         };
 
         // Объект для хранения векторных сглаженных объектов рельефа
         let worldTerrain = {
             mountains: [],
             lakes: [],
-            riverPoints: []
+            riverPoints: [],
+            forests: [], // Добавили масив для лісів
+            swamps: []   // Добавили масив для боліт
         };
+
 
         // Функция быстрого определения типа местности в любой точке экрана
         function getTerrainTypeAt(x, y) {
@@ -219,24 +224,33 @@
         function getTerrainTypeAt(x, y) {
             // 1. Проверяем озёра
             for (let lake of worldTerrain.lakes) {
-                let dx = x - lake.x;
-                let dy = y - lake.y;
+                let dx = x - lake.x; let dy = y - lake.y;
                 if (dx * dx + dy * dy < lake.radius * lake.radius) return TERRAIN_TYPES.LAKE;
             }
             // 2. Проверяем горы
             for (let mnt of worldTerrain.mountains) {
-                let dx = x - mnt.x;
-                let dy = y - mnt.y;
+                let dx = x - mnt.x; let dy = y - mnt.y;
                 if (dx * dx + dy * dy < mnt.radius * mnt.radius) return TERRAIN_TYPES.MOUNTAIN;
             }
             // 3. Проверяем реку (радиус русла реки ~25 пикселей)
             for (let pt of worldTerrain.riverPoints) {
-                let dx = x - pt.x;
-                let dy = y - pt.y;
+                let dx = x - pt.x; let dy = y - pt.y;
                 if (dx * dx + dy * dy < 25 * 25) return TERRAIN_TYPES.RIVER;
             }
+            // 4 и 5. Быстрая и точная проверка лесов и болот по координатной сетке ландшафта
+            if (typeof terrainGrid !== 'undefined') {
+                let gx = Math.floor(x / GRID_SIZE);
+                let gy = Math.floor(y / GRID_SIZE);
+                if (gy >= 0 && gy < terrainGrid.length && gx >= 0 && gx < terrainGrid[gy].length) {
+                let gridType = terrainGrid[gy][gx];
+                if (gridType === TERRAIN_TYPES.SWAMP) return TERRAIN_TYPES.SWAMP;
+                if (gridType === TERRAIN_TYPES.FOREST) return TERRAIN_TYPES.FOREST;
+                }
+            }
+
             return TERRAIN_TYPES.PLAINS;
         }
+
 
 
         // Функция случайного выбора типа войск (например: 60% пехота, 20% танки, 20% разведка)
@@ -335,22 +349,59 @@
 
             // 1. РАНДОМНАЯ РЕКА (появляется с шансом 60%)
             if (Math.random() < 0.60) {
-                let riverX = Math.floor(Math.random() * (WIDTH - 300)) + 150;
-                let drift = Math.random() * 4 - 2; 
-                let swing = Math.random() * Math.PI; 
+                const baseStartX = Math.floor(Math.random() * (WIDTH - 400)) + 200;
+                const baseEndX = baseStartX + (Math.random() * 160 - 80);
+                
+                // Определяем тип реки на эту игру: 0 - петляющая, 1 - умеренная, 2 - почти прямая
+                const riverType = Math.floor(Math.random() * 3);
+                
+                let mainFrequency, maxAmp, noiseScale;
+                
+                if (riverType === 0) {
+                    // 1. Извилистая природная река (как на вашем эскизе)
+                    mainFrequency = Math.random() * 1.0 + 2.0; // 2-3 плавные петли
+                    maxAmp = Math.random() * 40 + 60;          // Заметный размах (от 60 до 100px)
+                    noiseScale = 7;                            // Легкая природная неровность берегов
+                } else if (riverType === 1) {
+                    // 2. Умеренная равнинная река (небольшие плавные изгибы)
+                    mainFrequency = Math.random() * 0.8 + 1.2; // 1-2 пологих поворота
+                    maxAmp = Math.random() * 20 + 20;          // Аккуратный размах (от 20 до 40px)
+                    noiseScale = 5;
+                } else {
+                    // 3. Почти прямая река (степная или горная)
+                    mainFrequency = Math.random() * 0.5 + 0.5; // Минимальная волна
+                    maxAmp = Math.random() * 5 + 5;            // Едва заметное отклонение (от 5 до 10px)
+                    noiseScale = 12;                           // Больше мелких скалистых изломов вместо петель
+                }
+                
+                const extraFrequency = mainFrequency * 2.17; // Сложный коэффициент для асимметрии
+                const phase1 = Math.random() * Math.PI * 2;
+                const phase2 = Math.random() * Math.PI * 2;
 
                 for (let y = 0; y <= HEIGHT; y += 15) {
-                    swing += 0.08;
-                    drift += (Math.random() * 2 - 1) * 0.5 + Math.sin(swing) * 0.8;
-                    drift = Math.max(-5, Math.min(5, drift)); 
-                    riverX += drift;
+                    const progress = y / HEIGHT;
+                    const centerX = baseStartX + (baseEndX - baseStartX) * progress;
+                    
+                    // Модуляция: делает петли неравномерными по длине реки (в середине шире, к краям уже)
+                    const naturalModulation = Math.sin(progress * Math.PI + 0.3) * 0.5 + 0.5;
+                    
+                    // Смешивание двух частот ломает математическую точность синусоиды
+                    const mainWave = Math.sin(progress * Math.PI * 2 * mainFrequency + phase1) * maxAmp;
+                    const detailWave = Math.cos(progress * Math.PI * 2 * extraFrequency + phase2) * (maxAmp * 0.3);
+                    
+                    // Живой шум береговой линии
+                    const bankNoise = (Math.sin(y * 0.08) + Math.cos(y * 0.03)) * noiseScale;
+                    
+                    let riverX = centerX + (mainWave + detailWave) * naturalModulation + bankNoise;
 
-                    if (riverX < 120) { riverX = 120; drift = Math.abs(drift) * 0.4; }
-                    if (riverX > WIDTH - 120) { riverX = WIDTH - 120; drift = -Math.abs(drift) * 0.4; }
+                    if (riverX < 80) riverX = 80;
+                    if (riverX > WIDTH - 80) riverX = WIDTH - 80;
 
                     worldTerrain.riverPoints.push({ x: riverX, y: y });
                 }
             }
+
+
 
             // Безопасная функция проверки пересечения с рекой (работает корректно, даже если реки нет)
             function hitsRiver(x, y, radius) {
@@ -394,19 +445,36 @@
             }
 
             // Вспомогательная функция создания одной плотной горы
+            // Вспомогательная функция создания одной уникальной по форме горы
             function createSingleMountain(cx, cy, radius) {
                 let points = [];
                 let peakPoints = [];
                 let numPoints = 12;
+                
+                // Коэффициенты деформации: делают гору овальной, вытянутой по вертикали или горизонтали
+                const stretchX = Math.random() * 0.6 + 0.7; // Случайная ширина (от 70% до 130%)
+                const stretchY = Math.random() * 0.6 + 0.7; // Случайная высота (от 70% до 130%)
+                const ruggedness = Math.random() * 0.4 + 0.4; // Степень "скалистости" и неровности краев
+
                 for (let j = 0; j < numPoints; j++) {
                     let angle = (j / numPoints) * Math.PI * 2;
-                    let r = radius * (0.7 + Math.random() * 0.6); 
-                    points.push({ x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r });
+                    // Добавляем больше хаотичности в радиус для создания острых скальных выступов
+                    let r = radius * (1.0 + (Math.random() - 0.5) * ruggedness); 
+                    
+                    // Применяем коэффициенты растяжения к осям X и Y
+                    let ptX = cx + Math.cos(angle) * r * stretchX;
+                    let ptY = cy + Math.sin(angle) * r * stretchY;
+                    points.push({ x: ptX, y: ptY });
+
+                    // Рассчитываем смещенный заснеженный пик, повторяющий форму основания
                     let pr = r * 0.35;
-                    peakPoints.push({ x: (cx - 3) + Math.cos(angle) * pr, y: (cy - 5) + Math.sin(angle) * pr });
+                    let peakX = (cx - 3) + Math.cos(angle) * pr * stretchX;
+                    let peakY = (cy - 5) + Math.sin(angle) * pr * stretchY;
+                    peakPoints.push({ x: peakX, y: peakY });
                 }
                 worldTerrain.mountains.push({ x: cx, y: cy, radius: radius, points: points, peakPoints: peakPoints });
             }
+
 
             // 3. РАНДОМНЫЕ ОДИНОЧНЫЕ ГОРЫ (может быть от 0 до 5 гор на карте)
             const mountainRanges = Math.floor(Math.random() * 6); // Генерирует от 0 до 5 одиночных гор
@@ -444,6 +512,115 @@
                     hy += Math.sin(angle) * (radius * 1.1);
                 }
             }
+
+            // Очищаем старые данные лесов и болот перед новой игрой
+            worldTerrain.forests = [];
+            worldTerrain.swamps = [];
+
+            // 5. РАНДОМНЫЕ ЛЕСА (От 0 до 5 массивов природной формы без наложений)
+            const forestCount = Math.floor(Math.random() * 6); 
+            for (let i = 0; i < forestCount; i++) {
+                let cx, cy, radius, isValid;
+                let attempts = 0;
+
+                do {
+                cx = Math.floor(Math.random() * (WIDTH - 200)) + 100;
+                cy = Math.floor(Math.random() * (HEIGHT - 200)) + 100;
+                radius = Math.floor(Math.random() * 45) + 40; 
+
+                // Базовая быстрая проверка центра точки
+                let centerTerrain = getTerrainTypeAt(cx, cy);
+                isValid = centerTerrain === TERRAIN_TYPES.PLAINS;
+
+                if (isValid) {
+                    // Проверяем, чтобы границы нового леса не пересекали реки, горы, озера и другие леса/болота
+                    // Радиус проверки берем с запасом (* 1.3), чтобы биомы не слипались вплотную
+                    const checkDist = radius * 1.3;
+                    
+                    // 1. Проверка на пересечение с рекой
+                    if (hitsRiver(cx, cy, radius)) isValid = false;
+
+                    // 2. Проверка на пересечение с горами
+                    if (isValid && worldTerrain.mountains.some(m => Math.hypot(cx - m.x, cy - m.y) < (checkDist + m.radius))) isValid = false;
+
+                    // 3. Проверка на пересечение с озерами
+                    if (isValid && worldTerrain.lakes.some(l => Math.hypot(cx - l.x, cy - l.y) < (checkDist + l.radius))) isValid = false;
+
+                    // 4. Проверка на пересечение с уже созданными лесами
+                    if (isValid && worldTerrain.forests.some(f => Math.hypot(cx - f.x, cy - f.y) < (radius + f.radius))) isValid = false;
+                }
+
+                attempts++;
+                } while (!isValid && attempts < 50);
+
+                if (isValid) {
+                let points = [];
+                let numPoints = 10;
+                for (let j = 0; j < numPoints; j++) {
+                    let angle = (j / numPoints) * Math.PI * 2;
+                    let r = radius * (0.7 + Math.random() * 0.6);
+                    points.push({ x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r });
+                }
+                
+                worldTerrain.forests.push({ x: cx, y: cy, radius: radius, points: points });
+                spawnTerrainBlob(TERRAIN_TYPES.FOREST, Math.floor(radius * 1.5));
+                }
+            }
+
+            // 6. РАНДОМНЫЕ БОЛОТА (От 0 до 3 плавных клякс без наложений)
+            if (Math.random() < 0.70) {
+                const swampCount = Math.floor(Math.random() * 4);
+                for (let i = 0; i < swampCount; i++) {
+                let cx, cy, radius, isValid;
+                let attempts = 0;
+
+                do {
+                    cx = Math.floor(Math.random() * (WIDTH - 240)) + 120;
+                    cy = Math.floor(Math.random() * (HEIGHT - 240)) + 120;
+                    radius = Math.floor(Math.random() * 40) + 40;
+
+                    let centerTerrain = getTerrainTypeAt(cx, cy);
+                    isValid = centerTerrain === TERRAIN_TYPES.PLAINS;
+
+                    if (isValid) {
+                    const checkDist = radius * 1.3;
+
+                    // 1. Проверка на реку
+                    if (hitsRiver(cx, cy, radius)) isValid = false;
+
+                    // 2. Проверка на горы
+                    if (isValid && worldTerrain.mountains.some(m => Math.hypot(cx - m.x, cy - m.y) < (checkDist + m.radius))) isValid = false;
+
+                    // 3. Проверка на озера
+                    if (isValid && worldTerrain.lakes.some(l => Math.hypot(cx - l.x, cy - l.y) < (checkDist + l.radius))) isValid = false;
+
+                    // 4. Проверка на созданные леса (чтобы болота не затекали на деревья)
+                    if (isValid && worldTerrain.forests.some(f => Math.hypot(cx - f.x, cy - f.y) < (checkDist + f.radius))) isValid = false;
+
+                    // 5. Проверка на другие болота
+                    if (isValid && worldTerrain.swamps.some(s => Math.hypot(cx - s.x, cy - s.y) < (radius + s.radius))) isValid = false;
+                    }
+
+                    attempts++;
+                } while (!isValid && attempts < 50);
+                
+                if (isValid) {
+                    let points = [];
+                    let numPoints = 10;
+                    for (let j = 0; j < numPoints; j++) {
+                    let angle = (j / numPoints) * Math.PI * 2;
+                    let r = radius * (0.75 + Math.random() * 0.5); 
+                    points.push({ x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r });
+                    }
+                    
+                    worldTerrain.swamps.push({ x: cx, y: cy, radius: radius, points: points });
+                    spawnTerrainBlob(TERRAIN_TYPES.SWAMP, Math.floor(radius * 1.2));
+                }
+                }
+            }
+
+
+
             
             generateCountryStyles();
 
@@ -508,7 +685,8 @@
                     sY = Math.floor(Math.random() * (HEIGHT - 60)) + 30;
                     terrainType = getTerrainTypeAt(sX, sY);
                     attempts++;
-                } while ((terrainType === TERRAIN_TYPES.LAKE || terrainType === TERRAIN_TYPES.RIVER) && attempts < 50);
+                } while ((terrainType === TERRAIN_TYPES.LAKE || terrainType === TERRAIN_TYPES.RIVER) && attempts < 50); 
+                // Условие остается прежним, но теперь оно надежно фильтрует города от спавна в воде
 
                 const randType = Math.random();
 
@@ -666,6 +844,68 @@
                 ctx.restore();
             });
 
+            // --- ОТРИСОВКА ПЛОТНЫХ БОЛОТ СЛОЖНОЙ ФОРМЫ ---
+            if (worldTerrain.swamps) {
+                worldTerrain.swamps.forEach(swp => {
+                ctx.save();
+                ctx.fillStyle = TERRAIN_TYPES.SWAMP.color;
+                ctx.globalAlpha = 1.0; // Убрали прозрачность, болото теперь сплошное
+                ctx.beginPath();
+                ctx.moveTo(swp.points[0].x, swp.points[0].y);
+                for (let i = 0; i < swp.points.length; i++) {
+                    let curr = swp.points[i];
+                    let next = swp.points[(i + 1) % swp.points.length];
+                    ctx.quadraticCurveTo(curr.x, curr.y, (curr.x + next.x) / 2, (curr.y + next.y) / 2);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+                
+                // РИСУЕМ ТЕКСТУРУ ТИНЫ ПО ЦЕНТРУ БОЛОТА (Вместо камышей, чтобы не путать с горами)
+                ctx.save();
+                ctx.strokeStyle = "rgba(0, 0, 0, 0.4)";
+                ctx.lineWidth = 2.5;
+                ctx.lineCap = "round";
+                ctx.beginPath();
+                // Три аккуратные горизонтальные болотные линии
+                ctx.moveTo(swp.x - 14, swp.y - 4); ctx.lineTo(swp.x + 14, swp.y - 4);
+                ctx.moveTo(swp.x - 20, swp.y + 2); ctx.lineTo(swp.x + 20, swp.y + 2);
+                ctx.moveTo(swp.x - 10, swp.y + 8); ctx.lineTo(swp.x + 8, swp.y + 8);
+                ctx.stroke();
+                ctx.restore();
+                });
+            }
+
+            // --- ОТРИСОВКА ПЛОТНЫХ ЛЕСОВ СЛУЧАЙНОЙ ФОРМЫ ---
+            if (worldTerrain.forests) {
+                worldTerrain.forests.forEach(frst => {
+                ctx.save();
+                ctx.fillStyle = TERRAIN_TYPES.FOREST.color;
+                ctx.globalAlpha = 1.0; // Полностью непрозрачный природный массив
+                ctx.beginPath();
+                ctx.moveTo(frst.points[0].x, frst.points[0].y);
+                for (let i = 0; i < frst.points.length; i++) {
+                    let curr = frst.points[i];
+                    let next = frst.points[(i + 1) % frst.points.length];
+                    ctx.quadraticCurveTo(curr.x, curr.y, (curr.x + next.x) / 2, (curr.y + next.y) / 2);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+                
+                // Иконка дерева по центру леса для индикации
+                ctx.save();
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(frst.x, frst.y - 12); ctx.lineTo(frst.x - 8, frst.y + 2); ctx.lineTo(frst.x - 3,  frst.y + 2);
+                ctx.lineTo(frst.x - 3, frst.y + 10); ctx.lineTo(frst.x + 3, frst.y + 10); ctx.lineTo(frst.x + 3,  frst.y + 2);
+                ctx.lineTo(frst.x + 8, frst.y + 2);
+                ctx.closePath();
+                ctx.stroke();
+                ctx.restore();
+                });
+            }
 
             ctx.globalAlpha = 1.0; // Сбрасываем прозрачность
 
@@ -759,7 +999,6 @@
                 
                 ctx.restore();
             }
-
 
 
 
@@ -1149,32 +1388,52 @@
                 }
             }
 
-            // 4. ТАКТИЧЕСКИЙ МАНЕВР: Рух по вертикали на помощь
+            // 4. ТАКТИЧЕСКИЙ МАНЕВР: Фланговые обходы для разведки и поддержка для остальных
             troopsLeft.forEach(l => {
-                if (!l.underAttack && troopsRight.length > 0) {
-                    let closestEnemy = troopsRight;
-                    let minDist = HEIGHT * 2;
-                    troopsRight.forEach(r => {
-                        const dist = Math.abs((l.y + l.h/2) - (r.y + r.h/2));
-                        if (dist < minDist) { minDist = dist; closestEnemy = r; }
-                    });
-                    if (l.y + l.h/2 < closestEnemy.y + closestEnemy.h/2) l.y += l.troopSpeedY;
-                    else l.y -= l.troopSpeedY;
+            if (!l.underAttack && troopsRight.length > 0) {
+                if (l.type === 'recon') {
+                // РАЗВЕДКА: ищет координату Y, где НЕТ вражеских войск, чтобы зайти с фланга
+                let bestY = l.y;
+                let maxDistToEnemy = -1;
+                for (let testY = 10; testY < HEIGHT - 10; testY += 40) {
+                    let hasEnemy = troopsRight.some(r => testY >= r.y && testY <= r.y + r.h);
+                    if (!hasEnemy) {
+                    let dist = Math.abs(l.y - testY);
+                    if (dist > maxDistToEnemy) { maxDistToEnemy = dist; bestY = testY; }
+                    }
                 }
+                if (l.y < bestY) l.y += l.troopSpeedY; else if (l.y > bestY) l.y -= l.troopSpeedY;
+                } else {
+                // Пехота и Танки: идут на помощь к ближайшему врагу (старая логика)
+                let closestEnemy = troopsRight[0]; let minDist = HEIGHT * 2;
+                troopsRight.forEach(r => { const dist = Math.abs((l.y + l.h/2) - (r.y + r.h/2)); if (dist < minDist) { minDist = dist; closestEnemy = r; } });
+                if (l.y + l.h/2 < closestEnemy.y + closestEnemy.h/2) l.y += l.troopSpeedY; else l.y -= l.troopSpeedY;
+                }
+            }
             });
 
             troopsRight.forEach(r => {
-                if (!r.underAttack && troopsLeft.length > 0) {
-                    let closestEnemy = troopsLeft;
-                    let minDist = HEIGHT * 2;
-                    troopsLeft.forEach(l => {
-                        const dist = Math.abs((r.y + r.h/2) - (l.y + l.h/2));
-                        if (dist < minDist) { minDist = dist; closestEnemy = l; }
-                    });
-                    if (r.y + r.h/2 < closestEnemy.y + closestEnemy.h/2) r.y += r.troopSpeedY;
-                    else r.y -= r.troopSpeedY;
+            if (!r.underAttack && troopsLeft.length > 0) {
+                if (r.type === 'recon') {
+                // РАЗВЕДКА: ищет пустой фланг
+                let bestY = r.y;
+                let maxDistToEnemy = -1;
+                for (let testY = 10; testY < HEIGHT - 10; testY += 40) {
+                    let hasEnemy = troopsLeft.some(l => testY >= l.y && testY <= l.y + l.h);
+                    if (!hasEnemy) {
+                    let dist = Math.abs(r.y - testY);
+                    if (dist > maxDistToEnemy) { maxDistToEnemy = dist; bestY = testY; }
+                    }
                 }
+                if (r.y < bestY) r.y += r.troopSpeedY; else if (r.y > bestY) r.y -= r.troopSpeedY;
+                } else {
+                let closestEnemy = troopsLeft[0]; let minDist = HEIGHT * 2;
+                troopsLeft.forEach(l => { const dist = Math.abs((r.y + r.h/2) - (l.y + l.h/2)); if (dist < minDist) { minDist = dist; closestEnemy = l; } });
+                if (r.y + r.h/2 < closestEnemy.y + closestEnemy.h/2) r.y += r.troopSpeedY; else r.y -= r.troopSpeedY;
+                }
+            }
             });
+
 
             // 5. ДВИЖЕНИЕ ПОДКРЕПЛЕНИЙ С КРАЕВ (Марш к фронту)
             troopsLeft.forEach(t => {
@@ -1263,9 +1522,26 @@
                     if (isFlanked && isBackstabbed) multiplier = 3.0; // И в окружении, и в тыл
                     else if (isBackstabbed) multiplier = 2.5;         // Чистый удар в спину
                     else if (isFlanked) multiplier = 2.0;             // Зажали сверху и снизу
+                    
+                    let armorMultiplier = 1.0;
+                    // Считываем тип ландшафта прямо под центром текущего батальона
+                    let currentTerrain = getTerrainTypeAt(t.x + t.w / 2, t.y + t.h / 2); 
+
+                    if (t.type === 'tank') armorMultiplier = 0.58;  // Танки очень прочные
+                    if (t.type === 'recon') armorMultiplier = 1.4;
+
+                    // Спец-свойства Леса и Болота для баланса классов:
+                    if (currentTerrain.name === 'Лес') {
+                        if (t.type === 'recon') armorMultiplier *= 0.5; // Разведка в лесу маскируется (урон снижен в 2 раза!)
+                        if (t.type === 'infantry') armorMultiplier *= 0.85; // Пехота тоже использует укрытия деревьев
+                    }
+                    if (currentTerrain.name === 'Болото') {
+                        if (t.type === 'tank') armorMultiplier *= 1.8; // Тяжелые танки застревают в грязи и получают почти двойной урон!
+                        if (t.type === 'infantry') armorMultiplier *= 0.9; // Легкая пехота без труда обходит трясину
+                    }
 
                     // Урон для всех типов войск теперь рассчитывается одинаково (множитель удален отсюда)
-                    const damage = (Math.random() * 4 + 2) * multiplier;
+                    const damage = (Math.random() * 4 + 2) * multiplier * armorMultiplier;
                     const actualDamage = Math.min(damage, t.w);
 
                     // Определяем коэффициент веса потерь для панели статистики
@@ -1327,9 +1603,27 @@
                     if (isFlanked && isBackstabbed) multiplier = 3.0;
                     else if (isBackstabbed) multiplier = 2.5;
                     else if (isFlanked) multiplier = 2.0;
+                    
+                    let armorMultiplier = 1.0; 
+                    // Считываем тип ландшафта прямо под центром текущего батальона
+                    let currentTerrain = getTerrainTypeAt(t.x + t.w / 2, t.y + t.h / 2);
+
+
+                    if (t.type === 'tank') armorMultiplier = 0.58;  // Танки очень прочные
+                    if (t.type === 'recon') armorMultiplier = 1.4;
+
+                    // Спец-свойства Леса и Болота для баланса классов:
+                    if (currentTerrain.name === 'Лес') {
+                        if (t.type === 'recon') armorMultiplier *= 0.5; // Разведка в лесу маскируется (урон снижен в 2 раза!)
+                        if (t.type === 'infantry') armorMultiplier *= 0.85; // Пехота тоже использует укрытия деревьев
+                    }
+                    if (currentTerrain.name === 'Болото') {
+                        if (t.type === 'tank') armorMultiplier *= 1.8; // Тяжелые танки застревают в грязи и получают почти двойной урон!
+                        if (t.type === 'infantry') armorMultiplier *= 0.9; // Легкая пехота без труда обходит трясину
+                    }
 
                     // Урон для всех типов войск теперь рассчитывается одинаково (множитель удален отсюда)
-                    const damage = (Math.random() * 4 + 2) * multiplier;
+                    const damage = (Math.random() * 4 + 2) * multiplier * armorMultiplier;
                     const actualDamage = Math.min(damage, t.w);
 
                     // Определяем коэффициент веса потерь для панели статистики
@@ -1421,6 +1715,34 @@
 
             draw();
             checkVictory();
+
+            // --- ДИВЕРСИОННАЯ ЛОГИКА РАЗВЕДКИ (Перехват контроля над городами) ---
+            const captureRadius = 70; // Дистанция, на которой разведка замечает и перерезает снабжение города
+
+            settlements.forEach(s => {
+                // Синяя разведка (Страна А) продвигает границу за город, если подошла близко к его тылу
+                troopsLeft.forEach(t => {
+                    if (t.type === 'recon') {
+                        const dist = Math.hypot((t.x + t.w / 2) - s.x, (t.y + t.h / 2) - s.y);
+                        if (dist < captureRadius) {
+                            // Плавно сдвигаем координату границы на высоте города в пользу Страны А
+                            borderPoints[Math.floor(s.y)] = Math.max(borderPoints[Math.floor(s.y)], s.x + 15);
+                        }
+                    }
+                });
+
+                // Красная разведка (Страна Б) захватывает города в тылу Синих
+                troopsRight.forEach(t => {
+                    if (t.type === 'recon') {
+                        const dist = Math.hypot((t.x + t.w / 2) - s.x, (t.y + t.h / 2) - s.y);
+                        if (dist < captureRadius) {
+                            // Плавно сдвигаем координату границы на высоте города в пользу Страны Б
+                            borderPoints[Math.floor(s.y)] = Math.min(borderPoints[Math.floor(s.y)], s.x - 15);
+                        }
+                    }
+                });
+            });
+
         };
 
         /**
@@ -1725,12 +2047,15 @@
         function generateCountryStyles() {
             // Величезний вибір історичних та класичних типів прапорів
             const flagTypes = [
-                'horizontal-tricolor', 'vertical-bicolor', 'monocolor', 'cross', 'nordic',
-                'vertical-tricolor', 'triangle-chevron', 'diagonal', 'border-frame'
+            'horizontal-tricolor', 'vertical-bicolor', 'monocolor', 'cross', 'nordic',
+            'vertical-tricolor', 'triangle-chevron', 'diagonal', 'border-frame',
+            'horizontal-bicolor', 'quarters', 'sunburst', 'stripes-multi' // Новые типы геометрий
+            ]; 
+
+            const emblems = [
+            'none', 'star', 'crescent', 'cross-emblem', 'circle', 'crown', 'shield', 
+            'sword', 'sun', 'diamond', 'skull', 'heart', 'anchor', 'rune' // Новые декорации
             ];
-            
-            // Нові унікальні емблеми для армій
-            const emblems = ['none', 'star', 'crescent', 'cross-emblem', 'circle', 'crown', 'shield', 'sword', 'sun', 'diamond'];
 
             const realFlagColors = [
                 '#ffffff', // Білий
@@ -1832,6 +2157,33 @@
                 ctx.closePath();
                 ctx.fill();
             }
+            else if (style.flagType === 'horizontal-bicolor') {
+                ctx.fillStyle = c[0]; ctx.fillRect(x, y, w, h / 2);
+                ctx.fillStyle = c[1]; ctx.fillRect(x, y + h / 2, w, h / 2);
+            }
+            else if (style.flagType === 'quarters') {
+                ctx.fillStyle = c[0]; ctx.fillRect(x, y, w / 2, h / 2);
+                ctx.fillStyle = c[1]; ctx.fillRect(x + w / 2, y, w / 2, h / 2);
+                ctx.fillStyle = c[1]; ctx.fillRect(x, y + h / 2, w / 2, h / 2);
+                ctx.fillStyle = c[2] || c[0]; ctx.fillRect(x + w / 2, y + h / 2, w / 2, h / 2);
+            }
+            else if (style.flagType === 'stripes-multi') {
+                const lines = 5; const lw = h / lines;
+                for(let l=0; l<lines; l++) {
+                    ctx.fillStyle = c[l % 2 === 0 ? 0 : 1];
+                    ctx.fillRect(x, y + l * lw, w, lw);
+                }
+            }
+            else if (style.flagType === 'sunburst') {
+                ctx.fillStyle = c[0]; ctx.fillRect(x, y, w, h);
+                ctx.fillStyle = c[1];
+                const cx = x + w/2, cy = y + h/2;
+                for(let angle=0; angle<360; angle+=45) {
+                    ctx.beginPath(); ctx.moveTo(cx, cy);
+                    ctx.arc(cx, cy, Math.max(w, h), (angle-15)*Math.PI/180, (angle+15)*Math.PI/180);
+                    ctx.closePath(); ctx.fill();
+                }
+            }
             else if (style.flagType === 'border-frame') {
                 // Рамковий прапор (кольорова межа по периметру)
                 ctx.fillStyle = c[0]; ctx.fillRect(x, y, w, h);
@@ -1932,6 +2284,35 @@
                     ctx.fillRect(centerX - size / 3, centerY + size / 4, (size / 3) * 2, 4); // Гарда
                     ctx.fillRect(centerX - 3, centerY + size / 4, 6, size * 0.2); // Руків'я
                 }
+                else if (style.emblem === 'skull') {
+                    // Пиратский/военный череп (упрощенный силуэт)
+                    ctx.beginPath(); ctx.arc(centerX, centerY - size/6, size/3, 0, Math.PI*2); ctx.fill();
+                    ctx.fillRect(centerX - size/4, centerY, size/2, size/4);
+                }
+                else if (style.emblem === 'heart') {
+                    // Сердце (для мирных или гвардейских наций)
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY + size/3);
+                    ctx.bezierCurveTo(centerX - size/2, centerY - size/3, centerX - size/3, centerY - size, centerX, centerY - size/4);
+                    ctx.bezierCurveTo(centerX + size/3, centerY - size, centerX + size/2, centerY - size/3, centerX, centerY + size/3);
+                    ctx.fill();
+                }
+                else if (style.emblem === 'anchor') {
+                    // Морской якорь
+                    ctx.lineWidth = size / 6;
+                    ctx.beginPath(); ctx.moveTo(centerX, centerY - size/2); ctx.lineTo(centerX, centerY + size/3); ctx.stroke();
+                    ctx.beginPath(); ctx.arc(centerX, centerY, size/3, 0, Math.PI); ctx.stroke();
+                }
+                else if (style.emblem === 'rune') {
+                    // Мистическая скандинавская руна (Одал/Альгиз)
+                    ctx.lineWidth = size / 5;
+                    ctx.beginPath();
+                    ctx.moveTo(centerX - size/3, centerY + size/2); ctx.lineTo(centerX, centerY - size/4);
+                    ctx.lineTo(centerX + size/3, centerY + size/2); ctx.moveTo(centerX, centerY - size/4);
+                    ctx.lineTo(centerX, centerY - size/2); ctx.stroke();
+                }
+
+
             }
 
                 // --- ИСПРАВЛЕНО: МАКСИМАЛЬНО ВИДИМЫЕ ЗНАЧКИ КЛАССОВ ВОЙСК В УГЛАХ ---
