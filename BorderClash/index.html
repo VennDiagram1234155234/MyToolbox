@@ -199,28 +199,6 @@
         };
 
 
-        // Функция быстрого определения типа местности в любой точке экрана
-        function getTerrainTypeAt(x, y) {
-            for (let lake of worldTerrain.lakes) {
-                let dx = x - lake.x;
-                let dy = y - lake.y;
-                if (dx * dx + dy * dy < lake.radius * lake.radius) return TERRAIN_TYPES.LAKE;
-            }
-            for (let mnt of worldTerrain.mountains) {
-                let dx = x - mnt.x;
-                let dy = y - mnt.y;
-                if (dx * dx + dy * dy < mnt.radius * mnt.radius) return TERRAIN_TYPES.MOUNTAIN;
-            }
-            for (let pt of worldTerrain.riverPoints) {
-                let dx = x - pt.x;
-                let dy = y - pt.y;
-                if (dx * dx + dy * dy < 25 * 25) return TERRAIN_TYPES.RIVER; // Радиус русла ~25px
-            }
-            return TERRAIN_TYPES.PLAINS;
-        }
-
-
-        // Вспомогательная функция быстрого определения типа местности в любой точке экрана
         function getTerrainTypeAt(x, y) {
             // 1. Проверяем озёра
             for (let lake of worldTerrain.lakes) {
@@ -237,21 +215,23 @@
                 let dx = x - pt.x; let dy = y - pt.y;
                 if (dx * dx + dy * dy < 25 * 25) return TERRAIN_TYPES.RIVER;
             }
-            // 4 и 5. Быстрая и точная проверка лесов и болот по координатной сетке ландшафта
-            if (typeof terrainGrid !== 'undefined') {
-                let gx = Math.floor(x / GRID_SIZE);
-                let gy = Math.floor(y / GRID_SIZE);
-                if (gy >= 0 && gy < terrainGrid.length && gx >= 0 && gx < terrainGrid[gy].length) {
-                let gridType = terrainGrid[gy][gx];
-                if (gridType === TERRAIN_TYPES.SWAMP) return TERRAIN_TYPES.SWAMP;
-                if (gridType === TERRAIN_TYPES.FOREST) return TERRAIN_TYPES.FOREST;
+            // 4. Проверяем болота по реальным координатам
+            if (worldTerrain.swamps) {
+                for (let swp of worldTerrain.swamps) {
+                    let dx = x - swp.x; let dy = y - swp.y;
+                    if (dx * dx + dy * dy < swp.radius * swp.radius) return TERRAIN_TYPES.SWAMP;
+                }
+            }
+            // 5. Проверяем леса по реальным координатам
+            if (worldTerrain.forests) {
+                for (let frst of worldTerrain.forests) {
+                    let dx = x - frst.x; let dy = y - frst.y;
+                    if (dx * dx + dy * dy < frst.radius * frst.radius) return TERRAIN_TYPES.FOREST;
                 }
             }
 
             return TERRAIN_TYPES.PLAINS;
         }
-
-
 
         // Функция случайного выбора типа войск (например: 60% пехота, 20% танки, 20% разведка)
         function getRandomTroopType() {
@@ -679,13 +659,16 @@
                 let sX, sY, terrainType;
                 let attempts = 0;
 
-                // Шукаємо сушу (не Озеро і не Річка), максимум 50 спроб
-                do {
-                    sX = Math.floor(Math.random() * (WIDTH - 60)) + 30;
-                    sY = Math.floor(Math.random() * (HEIGHT - 60)) + 30;
-                    terrainType = getTerrainTypeAt(sX, sY);
-                    attempts++;
-                } while ((terrainType === TERRAIN_TYPES.LAKE || terrainType === TERRAIN_TYPES.RIVER) && attempts < 50); 
+            // Шукаємо сушу (не Озеро, не Річка і не Болото), максимум 50 спроб
+            do {
+                sX = Math.floor(Math.random() * (WIDTH - 60)) + 30;
+                sY = Math.floor(Math.random() * (HEIGHT - 60)) + 30;
+                terrainType = getTerrainTypeAt(sX, sY);
+                attempts++;
+            } while ((terrainType === TERRAIN_TYPES.LAKE || 
+                    terrainType === TERRAIN_TYPES.RIVER || 
+                    terrainType === TERRAIN_TYPES.SWAMP) && attempts < 50);
+
                 // Условие остается прежним, но теперь оно надежно фильтрует города от спавна в воде
 
                 const randType = Math.random();
@@ -879,19 +862,25 @@
             // --- ОТРИСОВКА ПЛОТНЫХ ЛЕСОВ СЛУЧАЙНОЙ ФОРМЫ ---
             if (worldTerrain.forests) {
                 worldTerrain.forests.forEach(frst => {
-                ctx.save();
-                ctx.fillStyle = TERRAIN_TYPES.FOREST.color;
-                ctx.globalAlpha = 1.0; // Полностью непрозрачный природный массив
-                ctx.beginPath();
-                ctx.moveTo(frst.points[0].x, frst.points[0].y);
-                for (let i = 0; i < frst.points.length; i++) {
-                    let curr = frst.points[i];
-                    let next = frst.points[(i + 1) % frst.points.length];
-                    ctx.quadraticCurveTo(curr.x, curr.y, (curr.x + next.x) / 2, (curr.y + next.y) / 2);
-                }
-                ctx.closePath();
-                ctx.fill();
-                ctx.restore();
+                    ctx.save();
+                    ctx.fillStyle = TERRAIN_TYPES.FOREST.color;
+                    ctx.strokeStyle = "#142b16"; // Более темный зеленый цвет для опушки леса
+                    ctx.lineWidth = 6;
+                    ctx.lineJoin = "round";
+                    ctx.globalAlpha = 0.95; // Почти сплошная закраска площади
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(frst.points[0].x, frst.points[0].y);
+                    for (let i = 0; i < frst.points.length; i++) {
+                        let curr = frst.points[i];
+                        let next = frst.points[(i + 1) % frst.points.length];
+                        ctx.quadraticCurveTo(curr.x, curr.y, (curr.x + next.x) / 2, (curr.y + next.y) / 2);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke(); // Рисуем красивую сглаженную границу леса
+                    ctx.restore();
+
                 
                 // Иконка дерева по центру леса для индикации
                 ctx.save();
@@ -1550,7 +1539,10 @@
                     if (t.type === 'recon') lossWeight = 0.5;   // Разведка дает в 2 раза меньше очков в общие потери
 
                     // Применяем коэффициент ТОЛЬКО к итоговой цифре потерь
-                    lossesLeft += actualDamage * t.h * lossWeight;
+                    // Танк дает х4 к потере площади, пехота и разведка — х1
+                    let areaWeight = (t.type === 'tank') ? 2 : 0.5;
+                    lossesLeft += actualDamage * t.h * areaWeight;
+
                     t.w -= actualDamage;
 
 
@@ -1632,7 +1624,10 @@
                     if (t.type === 'recon') lossWeight = 0.5;   
 
                     // Применяем коэффициент ТОЛЬКО к итоговой цифре потерь
-                    lossesRight += actualDamage * t.h * lossWeight;
+                    // Танк дает х4 к потере площади, пехота и разведка — х1
+                    let areaWeight = (t.type === 'tank') ? 2 : 0.5;
+                    lossesRight += actualDamage * t.h * areaWeight;
+
                     t.w -= actualDamage;
 
 
